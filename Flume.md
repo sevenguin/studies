@@ -19,8 +19,9 @@ agent上将启动source和sink（配置文件中配置的），channel不同，�
 `
     #Name the Components ont this agent
 a1.sources = r1  
-a1.channels = c1
-a1.sinks = k1
+
+a1.channels = c1  
+a1.sinks = k1  
  #configure the source
  a1.sources.r1.type = netcat
  a1.sources.r1.bind = localhost
