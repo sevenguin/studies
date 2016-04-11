@@ -16,8 +16,9 @@ Agent需要知道每个component加载什么，如何连接，从而组成一个
 `bin/flume-ng agent -n $agent_name -c conf -f conf/flume-conf.properties.template`
 agent上将启动source和sink（配置文件中配置的），channel不同，就是个资源
 一个简单的配置文件作为例子：
-`
-    #Name the Components ont this agent
+
+`  
+    #Name the Components ont this agent  
 a1.sources = r1    
 a1.channels = c1  
 a1.sinks = k1  
