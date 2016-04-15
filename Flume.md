@@ -16,25 +16,26 @@ Agent需要知道每个component加载什么，如何连接，从而组成一个
 `bin/flume-ng agent -n $agent_name -c conf -f conf/flume-conf.properties.template`
 agent上将启动source和sink（配置文件中配置的），channel不同，就是个资源
 一个简单的配置文件作为例子：
-`
-    #Name the Components ont this agent
-a1.sources = r1  
-a1.channels = c1
-a1.sinks = k1
- #configure the source
- a1.sources.r1.type = netcat
- a1.sources.r1.bind = localhost
- a1.sources.r1.port = 4444
- #configure the sink
- a1.sinks.k1.type = logger
-  #use the channel which buffer events in memory
-  a1.channels.c1.type = memory
-  a1.channels.c1.capacity = 1000      #如果爆仓了会怎么样？
-  a1.channels.c1.transactionCapacity = 100
-   #bind the source and sink to the channel
-   a1.sources.r1.channels1 = c1
-   a1.sinks.k1.channels1 = c1
-   #a1是这个agent的名字
+
+`  
+    #Name the Components ont this agent  
+a1.sources = r1    
+a1.channels = c1  
+a1.sinks = k1  
+ #configure the source  
+ a1.sources.r1.type = netcat  
+ a1.sources.r1.bind = localhost  
+ a1.sources.r1.port = 4444  
+ #configure the sink  
+ a1.sinks.k1.type = logger  
+  #use the channel which buffer events in memory  
+  a1.channels.c1.type = memory  
+  a1.channels.c1.capacity = 1000      #如果爆仓了会怎么样？  
+  a1.channels.c1.transactionCapacity = 100  
+   #bind the source and sink to the channel  
+   a1.sources.r1.channels1 = c1  
+   a1.sinks.k1.channels1 = c1  
+   #a1是这个agent的名字  
 `
 可以使用下面命令来启动flume（使用上面的配置）：
 `bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console`
@@ -48,3 +49,4 @@ a1.sinks = k1
 `
 
 
+<代码块，每行加上两个空格，则换行>
