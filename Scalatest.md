@@ -212,6 +212,36 @@ FunSpec也提供了一个markup方法，返回一个Documenter，允许你发送
 http://doc.scalatest.org/3.0.0/index.html#org.scalatest.FunSpec
 http://doc.scalatest.org/3.0.0/index.html#org.scalatest.FunSpecLike
 http://www.scalatest.org/user_guide
+###WordSpec
+WordSpec是ScalaTest提供的一个测试类，一般使用when、should、can这些属于String的方法，例如：
+
+	import org.scalatest.WordSpec
+	class StackSpec extends WordSpec {
+  	"A Stack" when {
+    	"empty" should {
+      		"be empty" in {
+       		 	// ...
+      		}
+      		"complain on peek" in {
+        		// ...
+      		}
+      		"complain on pop" in {
+        		// ...
+      		}
+    	}
+    	"full" should {
+      		"be full" in {
+        	// ...
+      		}
+      		"complain on push" in {
+        	// ...
+      		}
+    	}
+  	}
+}
+
+###FeatureSpec
+
 $搞完之后，可以对比一些Suite和Fun的区别$
 
 
