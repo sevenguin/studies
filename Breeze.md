@@ -54,6 +54,10 @@ three UFunc types：
 这个类似于普通的数学运算
 `DenseVector(1,2) + DenseVector(3,4)` =>等价于
 `OpAdd(DenseVector(1, 2), DenseVector(3, 4))`
+但是需要注意：
+`DenseVector[Double].rank(4) + 3` 表示随机产生4个数字，然后随机数都加上3，这样是可以的，但是`3 + DenseVector[Double]`是不可以的，因为`+`是DenseVector的一个函数，前面的其实就是一个DenseVector的实例调用`+`整个函数，参数是3
+不过Scala如何不用`.`来调用函数，而且不用`()`传参？
+`:` 在前面的是element-wise，例如`:=`叫做OpSet，`A:=B`，就是将B的元素值赋值给A的元素，而A仍然指向原来的object，再如：`:*`表示点乘
 ###Reduction UFuncs
 `val mat = DenseMatrix((1,2,3),(4,5,6))
 sum(mat)

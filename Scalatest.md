@@ -214,6 +214,8 @@ http://doc.scalatest.org/3.0.0/index.html#org.scalatest.FunSpecLike
 http://www.scalatest.org/user_guide
 $搞完之后，可以对比一些Suite和Fun的区别$
 
+###FeatureSpec
+
 
 sbt目录示例（$Testing in scala$）
 ├── src
