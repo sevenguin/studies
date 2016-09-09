@@ -244,6 +244,8 @@ WordSpec是ScalaTest提供的一个测试类，一般使用when、should、can�
 
 $搞完之后，可以对比一些Suite和Fun的区别$
 
+###FeatureSpec
+
 
 sbt目录示例（$Testing in scala$）
 ├── src

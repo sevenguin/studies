@@ -20,6 +20,10 @@ Hashell Curry
 `Function.curried(somefunc _)` 注意somefunc和_中间的空格，这个可以将多参函数柯林化
 柯林化的一个主要用途是：
 `val partialCurryCat = curryCat("foo")(_)`生成新的函数，只带一个参数的函数，可以这样循环的将多参无限制的方法逐步限制（降参）
+####函数与方法
+REPL里面独立的方法是FunctionN（表示N表示有几个参数）的实例
+类里面定义的方法是方法而不是函数
+函数即对象（可以在对象中继承FunctionN，然后实现apply方法，可以将对象直接当方法使用）
 
 ####implicit
 有两种情况：
@@ -55,4 +59,20 @@ implicit val j = 23  #声明的时候implicit是必须的，变量名可以随�
 test(2)  #这里j=23
 test(2)(3)
 `
+如果有多个implicit参数，则必须写在一个里面，而且implicit必须是最后一个参数例如：
+`def f(a:Int)(b:Int)(implicit c:Int, d:Int)` 这里面b的声明必须在implicit之前，而且c和d必须放在一起，implicit一旦声明，后面不许再跟()参数了
 
+####annotation
+#####specicalized
+`class a[@specialized(Int) A]{
+	def f (a:A){
+	}
+}`  
+由于编译时的类型擦除和对基本类型的自动装箱（List[Int]，Int被自动装箱成一个Container），这个就是为了避免自动装箱，编译器会为a生成两个版本，一个类是正常情况，一个是继承自`class a[Int]`，这样就特殊化了，避免了自动装箱。
+
+###一些特性
+1. `class A(val a:String)` a作为A的一个property；`class A(a: String)` a就不是A的property
+因为类里面参数都声明为`val`，编译器生成一个私有的字段（在内部使用不同的名字），同时生成一个和声明参数相同的reader method.
+
+
+详见：[Scala官方文档](http://www.scala-lang.org/sites/default/files/sids/dragos/Thu,%202010-05-06,%2017:56/sid-spec.pdf)
