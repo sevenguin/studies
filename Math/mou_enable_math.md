@@ -4,6 +4,11 @@ MathJax是一款运行在浏览器中的开源的数学符号渲染引擎，使�
 
 Help->Math Syntax Help有说明
 
+##Other by me
+\rm  roma字体
+A^{\rm T} A的转置
+
+
 ## Enable Math
 
 1. Math rendering is disabled by default, to enable it, check on the *Enable Math* option in *Preferences* > *General* > *All Documents*:.
