@@ -33,12 +33,14 @@ AdaBoost对上面两个问题的解决方案：
 	\qquad \qquad I(arg)，如果arg为True值为1，否则为0$
 	* 计算$G_m(x)$的系数
 	$\qquad a_m={1\over 2}ln{1-e_m\over e_m}，当e_m\le{1\over2}时，a_m随着e_m减小而增大，\\\
-	\qquad 即错误率高的分类器在最终分类器构造中权值更高，e_m\gt{1\over 2}那还不如瞎猜呢$
+	\qquad 即错误率高的分类器在最终分类器构造中权值更高，e_m\gt{1\over 2}那还不如瞎猜呢，\\\
+	\qquad 如果e_m=0,则说明这个分类器已经可以正确分类了，那应该就是用它分类，但是既然是\\\
+	\qquad 弱分类器，按理e_m应该不会等于0$
 	* 更新训练集的权值分布
   $\qquad D_{m+1}=(w_{m+1,1}....w_{m+1, i}...w_{m+1, n})\\\
   \qquad w_{m+1, i} = {w_{m,i}\over Z_m}e^{(-a_my_iG_m(x_i))}，G_m(x_i)=y_i则y_iG_m(x_i)=1，否则=-1，\\\
   \qquad  所以：G_m(x_i)=y_i时，w_{m+1,i}={w_{m,i}\over Z_m}e^{-a_m}，e^{-a_m}<1，说明权值变小\\\
-  \qquad \qquad G_m(x_i)\ne y_i时，w_{m+1,i}={w_{m,i}\over Z_m}e^{a_m}，e^{a_m}>1，说明权值变大\\\
+	  \qquad \qquad G_m(x_i)\ne y_i时，w_{m+1,i}={w_{m,i}\over Z_m}e^{a_m}，e^{a_m}>1，说明权值变大\\\
   \qquad Z_m是规范化因子：Z_m=\sum_{i=1}^Ne^{(-a_my_iG_m(x_i))}
 $
 3. 构建分类器的线性组合：
