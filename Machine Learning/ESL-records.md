@@ -770,3 +770,45 @@ $$
 
 #### 最优分类超平面（Optimal Separating Hyperplanes）
 
+最佳分类超平面将两个类分开，而且两个类中的离超平面最近的点到超平面距离最大化。不仅仅因为这个方法能提供唯一的超平面，而且在训练数据中最大化边界距离也会使得在测试数据上表现更好。
+
+根据上面的描述，则最优分类超平面的优化问题为：
+$$
+\max_{\beta,\beta_0,||\beta||=1}M，subject\ to\ y_i(x_i^T\beta+\beta_0)\ge M，i=1, 2, ..., N
+$$
+这个限制条件的不等式其实是在超平面周围建立一个区域，真值向上或向下变化M。如果是二维平面，则是实际直线为中心，向两边扩展M个单位成一个条状，就是求最大条状。$||\beta||=1$的限制可以去掉，则后面的限制条件换做：$y_i(x_i^T\beta+\beta_0)\ge ||\beta||M$，因为任何满足这个不等式的参数$(\beta,\beta_0)$,因此任何正比例乘以他们也就满足不等式，我们可以假设：$||\beta||=1/M$，因此上面的优化问题可以转化为：
+$$
+\min_{\beta,\beta_0}{1\over2}||\beta||^2，subject\ to\ y_i(x_i^T\beta + \beta_0)\ge 1， i=1,...,N
+$$
+因为$||\beta||=1/M$，所以$||\beta||$和$M$是反比例的，所以是求$M$最大，则求$||\beta||$最小，也就是${1\over 2}||\beta||^2$最小。
+
+最小化目标函数，对应的拉格朗日函数为：
+$$
+L_P = {1\over 2}||\beta||^2 - \sum_{i=1}^N\alpha_i[y_i(x_i^T\beta + \beta_0) - 1]
+$$
+对$\beta$和$\beta_0$分别求偏导，并设置其值为0，则：
+$$
+对于\beta：\beta = \sum_{i=1}^N\alpha_i y_i x_i，\\
+对于\beta_0：0 = \sum_{i=1}^N\alpha_iy_i。
+$$
+将这两个式子带入$L_p$，得到：
+$$
+L_D = \sum_{i=1}^N\alpha_i - {1\over 2}\sum_{i=1}^N\sum_{k=1}^N\alpha_i\alpha_ky_iy_kx_i^Tx_k，subject\ to\ \alpha_i \ge 0
+$$
+但是拉格朗日式子如何求最优解，__这是个问题__，如何做？
+
+## Basis Expansions and Regularization
+
+本章的核心思想是用附加变量来扩充/替换输入X的向量，这些变量是X的变换，然后在新的输入空间中使用线性模型。
+
+使用标识$h_m(X)：\mathbb{R}^p\to\mathbb{R}$表示$X$的第$m$个转换，$m=1,...,M$，我们的模型变为：
+$$
+f(X) = \sum_{m=1}^M\beta_m, h_m(X)，M就是新维度
+$$
+$h_m$可能的应用，总结如下：
+
+* $h_m(X)=X_i，i=1,2,...,p$，表示原始的线性模型
+* $h_m(X) = X_j^2或h_m(X)=X_jX_k$允许输入多项式，前面这个是二项式
+* $h_m(X) = \log(X_j)，\sqrt{X}$，对单个变量的非线性转换
+* $h_m(X)=I(L_m\le X_k\lt U_m)$，一个区间的指标函数
+
