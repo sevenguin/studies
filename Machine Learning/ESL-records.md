@@ -1,7 +1,5 @@
 ## 监督学习概论
 
-[统计学习精要(The Elements of Statistical Learning)课堂笔记](http://www.loyhome.com/elements_of_statistical_learining_lecture_notes/)
-
 ### 最小二乘法和最近邻法
 
 线性模型对数据结构和输出稳定性做了很多的假设，但是可能产生不精确的预测；knn对结构做了很少的假设：它的预测经常比较精确，但是不稳定。
@@ -641,9 +639,11 @@ $$
 $$
 $\beta=0$可以作为迭代的起始值。
 
-明天在把IRLS弄明白。
+在进行拟合之后，可以对每个特征的参数计算Z-score（每一个参数除以他们的标准差），这样剔除最不显著的（小于2），然后重新拟合求出新参数，再进行判断剔除，最后到没有不显著的参数。
 
-> 最大似然估计（Maximum likelihood estimation）
+或者另一个更好但是更耗时的方法是逐一剔除一个特征，然后进行拟合，然后执行偏差分析（analysis of deviance）来决定哪一个应该被剔除。
+
+> __最大似然估计（Maximum likelihood estimation）__
 >
 > $L(X_1, X_2, ..., X_n;\theta_1, \theta_2, ..., \theta_n)=f(X_1;\theta_1, ...,\theta_k)f(X_2;\theta_1,...,\theta_k)...f(X_n;\theta_1,...,\theta_k)$,
 >
@@ -663,7 +663,7 @@ $\beta=0$可以作为迭代的起始值。
 > $$
 > 单个元素可以表示为：$\textbf H_{i,j} = {\frac{\partial^2f}{\partial x_i\partial x_j}}$。
 
-> 牛顿方法
+> __牛顿方法__
 >
 > 输入：目标函数$f(x)$，这里可能就是$l(\beta)$，梯度$g(x)=\nabla f(x)$，黑塞矩阵H(x)，精度要求为$\epsilon$
 >
@@ -683,4 +683,90 @@ $\beta=0$可以作为迭代的起始值。
 > f(x) = f(x^{(k)}) + g_k^T(x - x^{(k)}) + {1\over 2}(x-x^{(k)})^TH(x^{(k)})(x-x^{(k)})，g_k=g(x^{k})=\nabla f(x^{(k)})，H(x^{(k)})是f(x)的黑塞矩阵
 > $$
 > 牛顿法利用极小点的必要条件：$\nabla f(x) = 0$，每次迭代中从点$x^{(k)}$开始，求目标函数的极小点，作为第$k+1$次迭代值$x^{(k+1)}$，具体地，假设$x^{(k+1)}$满足：$\nabla f(x^{(k+1)}) = 0$，对上面的泰勒展开求梯度：$\nabla f(x) = g_k + H_k(x - x^{(k)})$，所以设k+1次就是极值点，$\nabla f(x^{(k+1)}) = g_k + H_k(x^{(k+1)} - x^{(k)}) = 0$，因此：$x^{(k+1)} = x^{(k)}  - H_k^{-1}g_k$。
+
+> __M-estimator__
+>
+> 设$f$是一个有参数$\theta$的函数，则：$\hat\theta = arg\min_\theta(\sum_{i=1}^nf(x_i,\theta))$被叫做M-estimator（M for maximum likelihood-type)
+
+> __IRLS__
+>
+> Iteratively reweighted least squares(IRLS)方法被用来解决有如下形式目标函数最优化问题：
+> $$
+> \hat\beta = arg\min_\beta\sum_{i=1}^n|y_i - f_i(\beta)|^{p}
+> $$
+> 通过迭代方法，每一步包括解决一个加权最小二乘问题（如下形式）：
+> $$
+> \beta^{t+1} = arg\min_\beta \sum_{i+1}^n(w^{(t)})|y_i - f_i(\beta)|^2，w^{(t)}=|y_i - X_i\beta^{(t)}|^{p-2}，p为Lp问题阶数
+> $$
+> IRLS被用来寻找一般线性模型的最大似然估计
+
+> __Deviance__
+>
+> 偏差，统计学中偏差是用来衡量模型拟合质量，它是OLS（一般最小二乘法）下使用残差和来评估模型的一个一般化方法，将其应用到最大似然估计的模型拟合方法中。
+>
+> 在OLS中，最小的残差平方和来作为最优模型的度量，也是通过这个方法来拟合参数值。在最大似然估计拟合出的模型参数后，如何度量哪个最大似然估计更好？
+>
+> 模型$M_0$基于数据集$y$的$deviance$定义为：
+> $$
+> D(y) = -2(\log(p(y|\hat\theta_0)) - \log(p(y|\hat\theta_s)))
+> $$
+> $\hat\theta_0$表示为模型$M_0$拟合出来的参数值，$\hat\theta_s$表示为saturated model拟合出来的参数（saturated model：饱和模型，自由度为0，指各观测变量之间均容许相关的最复杂的模型，是人为设定的约束条件最少的模型，纯粹按照数据的相互关系来构建最优的模型，所以是理想状态下的最优模型）。
+>
+> 事实上如果存在$M_1$和$M_2$，则$D_1 - D_2 = -2(\log(p(y|\hat\theta_1)) - \log(p(y|\hat\theta_2)))$，不用计算饱和来比较两个模型中的偏差
+
+#### $L_1$正则Logistic回归
+
+类似Lasso，Logistic也是用$L_1$来作为模型罚项，截距也不在罚项范围内，和Lasso不同的是，这里的罚项是为了求最大值：
+$$
+\max_{\beta_0, \beta}\lbrace\sum_{i=1}^N[y_i(\beta_0 + \beta^Tx_i) - \log(1+e^{\beta_0 + \beta^Tx_i})] - \lambda\sum_{j=1}^p|\beta_j|\rbrace
+$$
+上面这个函数是凹的，一个解决方案是使用非线性规划方法。
+
+#### Logistic回归还是LDA？
+
+一般来说，LDA的前提假设是输出数据服从高斯分布，但是这个条件可能不满足。所以Logistic相对来说更安全，也更健壮，因为其所需要的假设更少。据经验来说，这些模型的结果相似，甚至LDA在不适合的地方使用时。
+
+### 分离超平面（Separating Hyperplanes）
+
+有如下分类器，计算输入特征的线性组合，然后返回分类结果，叫做感知器（perceptrons）：
+$$
+\lbrace x:\hat\beta_0 + \hat\beta_1x_1 + \hat\beta_2x_2 = 0\rbrace
+$$
+perceptron是neural network的基础。
+
+一些线性代数的基础：
+
+假设存在超平面$L$，由函数$f(x) = \beta_0 + \beta^Tx=0$组成，则有如下结论：
+
+1. 对于$L$上的任意两个点$x_1, x_2$都有：$\beta^T(x_1-x_2) = 0$，因此$\beta^T$垂直$L$，且其单位向量为：$\beta^* = \beta/||\beta||$
+2. 对$L$上任意一点$x_0$都有：$\beta^Tx_0 = \beta_0$
+3. 任一点（包括不在$L$上的点）$x$到超平面$L$的有向距离是：$\beta^{*T}(x-x_0) = {1\over||\beta||}(\beta^Tx+\beta_0)={1\over||f^\prime(x)||}f(x)$
+
+#### Rosenblatt的感知器学习算法
+
+感知器是Rosenblatt在1958年发布工程文献，感知器学习算法尝试寻找一个分离超平面，来最小化误分类点到决策边界的距离。假设类$y_i=1$被误分类，那么$x_i^T\beta+\beta_0<0$，反之$y_i=-1$被误分类时其值大于0，所以等价为求下面公式的最小值：
+$$
+D(\beta, \beta_0)=-\sum_{i\in M}y_i(x_i^T\beta + \beta_0),M是误分类点的索引
+$$
+$D$的值非负，而且和误分类点到决策边界的距离成正比，对参数$\beta, \beta_0$求偏导如下：
+$$
+{\partial D(\beta,\beta_0)\over\partial\beta} = -\sum_{i\in M}y_ix_i，{\partial D(\beta, \beta_0)\over\partial\beta_0}=-\sum_{i\in M}y_i
+$$
+通过随机梯度下降方法（stochastic gradient descent），更新参数有：
+$$
+\binom{\beta}{\beta_0}\gets\binom{\beta}{\beta_0} + \rho\binom{y_ix_i}{y_i}
+$$
+因为求最小值，所以是反向梯度，和梯度的负号刚好抵消。
+
+这个方法的一些问题：
+
+* 当数据本身就是分散时，得到的结果可能不唯一，超平面的参数取决于选取的初始值
+* 迭代的次数可能很大，步长$\rho$越小，则耗时越长
+* 数据如果不是分散的，算法则会不收敛，迭代有可能在一些值之间震荡（循环），而且不易检测（由于震荡时间长？）
+
+解决第一个问题的方案是通常对超平面做出一些特定的限制，从而达到唯一性。
+
+第二个问题通常可以通过寻找不在原始输入空间的超平面来解决，通过创建原始变量的许多基函数变换而获得的大得多的空间。
+
+#### 最优分类超平面（Optimal Separating Hyperplanes）
 
