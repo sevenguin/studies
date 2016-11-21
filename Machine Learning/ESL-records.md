@@ -803,7 +803,7 @@ $$
 
 使用标识$h_m(X)：\mathbb{R}^p\to\mathbb{R}$表示$X$的第$m$个转换，$m=1,...,M$，我们的模型变为：
 $$
-f(X) = \sum_{m=1}^M\beta_m, h_m(X)，M就是新维度
+f(X) = \sum_{m=1}^M\beta_m h_m(X)，M就是新维度
 $$
 $h_m$可能的应用，总结如下：
 
@@ -811,4 +811,32 @@ $h_m$可能的应用，总结如下：
 * $h_m(X) = X_j^2或h_m(X)=X_jX_k$允许输入多项式，前面这个是二项式
 * $h_m(X) = \log(X_j)，\sqrt{X}$，对单个变量的非线性转换
 * $h_m(X)=I(L_m\le X_k\lt U_m)$，一个区间的指标函数
+
+本章包括介绍一些有用的方法族，如：分段多项式（piecewise-polynomials）、splines、wavelet（波段，图像和信号处理）。这些方法产生一个字典D，而D的数量会大到超出我们能够处理的范围。所以需要使用方法来控制模型的复杂度：
+
+* 限制函数，限制函数的数量
+* 选择方法（selection methods），扫描整个D，只选取那些对模型贡献明显的$h_m$
+* 正则化，限制系数$\beta_m$
+
+### 分段多项式和样条（Piecewise Polynomials and Splines）
+
+__分段多项式__:是将$X$的作用域分割成连续的间隔，每一个间隔由一个单独的多项式表示：
+$$
+例如，三段常量分段：h_1(X) = I(X\lt\xi_1)，h_2(X) = I(\xi_1\le X\le\xi_2)，h_3(X)=I(\xi_2\le X)\\
+f(X) = \sum_{m=1}^M\beta_mh_m(X)，由于不连续且是常量分段，则\hat\beta_m=\overline Y_m（\overline Y_m，是第m个区域内的均值）
+$$
+一般的，$M$阶样条(有$K$个节点(knots)：$\xi，j=1,...,K$，)是$M$阶分段多项式，$M-2$阶函数连续可导。例如：三次样条（cubic spline）有$M=4$，分段常量函数有$M=1$。一般情况下的基函数（truncated-power）集如下：
+$$
+Order-M，h_j(X) = X^{j-1}，j=1,...,M\\
+h_{M+l}(X) = (X-\xi_l)^{M-1}_+，l=1,...,K。
+$$
+一般常用的就是$Order-M，M=1,2,4$。
+
+这些固定数量的节点（fix knots）也被称作回归样条（Regression splines），这时候我们需要选定节点数量、阶数和节点位置。一个方法是通过基函数或者自由度来参数化样条族，然后通过观测值$x_i$来决定knots的位置。
+
+有很多方法来表示样条函数（spline functions），上面使用的是truncated power basis，这个方法比较简单，但是在计算上并不太好：过大的幂次问题会导致严重的舍入问题。$B-spline\ basis$在$K$很大的时候会更适合计算。
+
+#### 自然三次样条（Natural Cubic Splines）
+
+
 
