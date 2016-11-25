@@ -836,7 +836,13 @@ $$
 
 有很多方法来表示样条函数（spline functions），上面使用的是truncated power basis，这个方法比较简单，但是在计算上并不太好：过大的幂次问题会导致严重的舍入问题。$B-spline\ basis$在$K$很大的时候会更适合计算。
 
-#### 自然三次样条（Natural Cubic Splines）
+#### 自然三次样条（Natural Cubic Splines）--Bad
 
+natural cubic spline增加额外的限制，在knots的边界上是线性的。
 
+### 过滤和特征提取（Filtering and Feature Extraction）
+
+对输入特征进行转换：$x^* = \textbf H^Tx$，$\textbf H^T$是一个p*M的natural cubic splines基向量，过滤后的特征再作为输入进行学习处理。对高纬度数据进行预处理非常普遍且对于提高学习算法的性能十分关键。
+
+### 平滑样条
 
