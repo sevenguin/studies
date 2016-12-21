@@ -330,6 +330,20 @@ Series创建之后是对index进行排序之后的数据，如果指定了`index
   p  9  9  9
 ```
 
+`add,sub,div,mul`函数可用。`add`可以将DataFrame合并在一起，指定`fill_value=0`，不会讲没有交叉的值置为`NaN`。
+
+```
+> adf = DataFrame({'a':[1,2,3,4,5], 'b':[2,3,4,5,6]})
+> bdf = DataFrame({'x':[4,32,2,1,1], 'y':[6,2,1,3,4]})
+> adf.add(bdf, fill_value=0)    #如果不指定fill_value则，所有元素值填充为NaN
+      a   b   x  y
+  0   1   2   4  6
+  1   2   3  32  2
+  2   3   4   2  1
+  3   4   5   1  3
+  4   5   6   1  4
+```
+
 ### 函数和映射
 
 Numpy的ufuncs（基于元素的数组方法）都可以使用，例如：`np.abs(fm)`

@@ -31,7 +31,7 @@
     R_srm = {1\over N}\sum_{i=1}^NL(y_i, f(x_i)) + \lambda J(f)
     $$
 
-*  算法：算法是指学习模型具体计算方法，基本就是最优化问题的算法。
+* 算法：算法是指学习模型具体计算方法，基本就是最优化问题的算法。
 
 ### 模型评估与模型选择
 
@@ -131,6 +131,70 @@ $$
 可以根据相关程度判定是否进行回归分析，相关系数度量变量之间的线性关系的强弱程度或共变趋势。
 
 scikit-learn库中`sklearn.metrics.r2_score`计算$R^2$。
+
+
+
+### 模型评价标准
+
+一般使用评价标准有logloss、accuracy、precision和AUC等，AUC和logloss比accuracy更常用，因为很多机器学习算法的预测都是分类结果是概率，如果要计算accuracy，则需要选择一个阈值，把概率转化成类别（大于阈值则为1或0等），而其他两个可以避免这个问题。下面详细介绍。
+
+一个模型的效果如何一般可以通过测试集和训练集来评估，或者使用一些交叉验证、或者集成方法来评估。不同的模型有不同的评估方法，一般来说：
+
+* 分类模型：精确度、反向误差、f-measure或者macro-average
+* 概率分类：logloss、正确分类比例、MSE（mean squared error）、Brier‘s score、ROC、AUC
+* 回归模型：MSE或MAE（mean absolute error）
+
+一般通过对模型整体的观察和描述，可以得到一些方法来改进模型的准确度或置信度。而Calibration可以做到这两点。
+
+#### ROC曲线
+
+receiver operating characteristic，接收者操作特征，ROC曲线每个点反应对同一信号刺激的感受性。
+
+X轴为伪阳率（false positive）值为$NP\over NP+TN$，Y轴为真阳率（true positive），值为$TP\over TP + FN$，对于二类分类问题有（两类为0(N-阴)，1(P-阳)），横轴为真实类别，纵轴为预测类别：
+
+|       | 1(P)   | 0(N)   |
+| ----- | ------ | ------ |
+| 1(P') | TP（真阳） | NP（伪阳） |
+| 0(N') | FN（伪阴） | TN（真阴） |
+
+假如分类算法得到了分类结果，是一系列概率，则从0到1，逐个选择值作为阈值，每次选择一个都可以计算其伪阳率、真阳率，则这得到x,y坐标值，选择足够多的阈值，则可以画出一条曲线，则此曲线为Roc。（可以设阈值为t，则x=f(t)，y=g(t)）。
+
+#### AUC
+
+Area under Curve：Roc曲线下的面积，介于0.1到1之间。Auc可以作为数值直观评价分类器的好坏，值越大越好。
+
+AUC的意义：如果从定义来理解AUC的含义，比较困难，实际上AUC和Mann–Whitney+U+test有密切的联系，我会在第三部说明。从Mann–Whitney+U+statistic的角度来解释，AUC就是从所有1样本中随机选取一个样本，+从所有0样本中随机选取一个样本，然后根据你的分类器对两个随机样本进行预测，把1样本预测为1的概率为p1，把0样本预测为1的概率为p0，p1>p0的概率就等于AUC。所以AUC反应的是分类器对样本的排序能力。根据这个解释，如果我们完全随机的对样本分类，那么AUC应该接近0.5。另外值得注意的是，AUC对样本类别是否均衡并不敏感，这也是不均衡样本通常用AUC评价分类器性能的一个原因。&oq=如果从定义来理解AUC的含义，比较困难，实际上AUC和Mann–Whitney+U+test有密切的联系，我会在第三部说明。从Mann–Whitney+U+statistic的角度来解释，AUC就是从所有1样本中随机选取一个样本，+从所有0样本中随机选取一个样本，然后根据你的分类器对两个随机样本进行预测，把1样本预测为1的概率为p1，把0样本预测为1的概率为p0，p1>p0的概率就等于AUC。所以AUC反应的是分类器对样本的排序能力。根据这个解释，如果我们完全随机的对样本分类，那么AUC应该接近0.5。另外值得注意的是，AUC对样本类别是否均衡并不敏感，这也是不均衡样本通常用AUC评价分类器性能的一个原因。
+
+部分参考：[李小猫](https://www.zhihu.com/question/39840928?from=profile_question_card)回答。
+
+#### Calibration
+
+Calibration一般应用于解决两个问题：
+
+* how error is distributed：错误如何分布
+* how self-assessment（confidence or probability estimation）is performed：如何进行自我评估（通过概率估计或者置信度）
+
+给一个一般的校准技术，我们可以将其应用到任何现存的机器学习方法中。依据不同的任务使用不同的校准（Calibration）技术，同时也就有了对其更精准的定义。下面介绍一些最常用的校准技术（包括type code）：
+
+* __Type CD：__Calibration techniques for __discrete classification__("(class) distribution calibration in classification" or simply "class calibration")，一个典型的校正发生在这样的情况下——预测出来的分类占比和原始的分类占比不同。例如：有类别A和B，原始问题中A和B的比例为95%和5%，但是预测结果中A类为99%，B类为1%。因此，类校正（class calibration）被定义为——真实或按照经验的类分布和预测类分布的近似程度。这个情况下一个标准的做法是，调整阈值，让A和B的比例靠近真实值，但是需要注意的是这种方法可能会导致更多的误分类。通常我们只对整体的占比感兴趣，但是校正可以对局部的学习和使用。
+* __Type CP：__Calibration techniques for __probabilistic classification__（probabilitic calibration for classification），概率分类一般会伴随着预测的概率。如果我们预测某一分类的可能性是99%，那我们期望正确率应该就是99%，如果实际上仅仅只有50%的正确率，则这个是没有被校准，因为过于乐观。反之亦然，这两种情况，期望的值和实际值不匹配。这种情况下，校准的定义就是实际概率和预测概率的近似程度。一般好的校准意味着对不同的例子的估计概率不同。对于一些情况置信度比较高，对于一些难度较大的则置信度较低。这意味着，这种类型的校准的度量方式是——通过数据分区以局部方式评估期望值和实际值之间的一致性。（因为不同的数据有不同的校准值？）
+* __Type RD：__Calibration techniques to fix error __distribution for regression__('distribution calibration in regression')，期望值应该接近于实际值，有几种方法评估——假设预估值为y'，实际值为y，则E(y')=E(y)，或E(y'-y)=0或E(y'y)=1。通常，通过用于评估回归模型的典型措施来检测和惩罚这些问题，并且许多技术（例如线性回归），生成校准模型。
+* __Type RP：__Calibration techniques to improve __probability estimation for regression__ ('probabilistic calibration for regression')，这是相对比较新的领域，当连续预测伴随着一个概率密度函数，则可用。这种回归模型通常被称为密度预测模型。例如：不同于告诉你一个准确的值——预测明天温度是23.2℃，而是给一个概率密度函数，这个函数可以计算温度在21°-25°的概率是0.9，温度在15°-30°的概率是0.99。如果我们预测的很准，则密度函数应该比较窄（置信区间），如果我们预测的很差，则密度函数可能会很宽。类似于Type CP，一个好的校准通常需要每一个预测的密度函数是特定的，例如：对于一些例子当置信度比较高时，密度函数较窄，反之较宽。和Type CP类似，这种类型的校准的度量方式是——通过数据分区以局部方式评估期望值和实际值之间的一致性。
+
+对于这四类问题的总结：
+
+| TYPE | Task           | Problem               | Global/Local    | What is calibrated?    |
+| ---- | -------------- | --------------------- | --------------- | ---------------------- |
+| CD   | Classification | 期望类分布和实际的类分布不同（占比）    | Global or Local | Predictions            |
+| CP   | Classification | 期望或估计的概率和实际的概率不一致     | Local           | Probability/confidence |
+| RD   | Regression     | 期望输出和实际平均输出不一致        | Global or Local | Predictions            |
+| RP   | Regression     | 期望的错误置信区间或概率密度函数太宽或太窄 | Local           | Probability/confidence |
+
+需要注意的是，CD和RD的校准都需要修改预测结果（CD调整阈值影像，RD对预测值调大或调小），而CP和RP，由于只是修正Confidence，对实际的预测结果可能根本不会产生影响。所以，像平均误差这种度量方式不会受到这两个校准的影响。
+
+
+
+
 
 
 
