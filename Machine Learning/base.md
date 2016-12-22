@@ -167,7 +167,7 @@ AUC的意义：如果从定义来理解AUC的含义，比较困难，实际上AU
 
 部分参考：[李小猫](https://www.zhihu.com/question/39840928?from=profile_question_card)回答。
 
-#### Calibration
+### Calibration
 
 Calibration一般应用于解决两个问题：
 
@@ -192,9 +192,101 @@ Calibration一般应用于解决两个问题：
 
 需要注意的是，CD和RD的校准都需要修改预测结果（CD调整阈值影像，RD对预测值调大或调小），而CP和RP，由于只是修正Confidence，对实际的预测结果可能根本不会产生影响。所以，像平均误差这种度量方式不会受到这两个校准的影响。
 
+校准测量是任何能够对校准程度做定量评定的测量方法，很多经典的质量评定方法对校准技术都不太有用，实际上，一些新的或特殊的测量方法被用来评估校准效果，特别是对CP和RP，下面是校准测量方法对每一个校准问题：
+
+| TYPE |           Calibration measures           | Partially sensitive measures  |           Insensitive measures           |
+| :--: | :--------------------------------------: | :---------------------------: | :--------------------------------------: |
+|  CD  | Macro-averaged accuracy, proportion accuracy, proportion | Accuracy, mean F-measure, ... | Area Under the ROC Curve (AUC), MSEp,Logloss, ... |
+|  CP  |      MSEp, LogLoss,CalBin, CalLoss       |                               |    AUC, Accuracy, mean F-measure, ...    |
+|  RD  |       Average error,Relative error       |        MSEr, MAE, ...         |                                          |
+|  RP  |        Anderson-Darling (A2) test        |                               | Average error, relative error, MSEr, MAE, ... |
+
+假设存在数据集$T$，$n$表示数据集样本个数，$C$表示类的个数，$f(i,j)$表示实际情况下样本$i$对应的类别是$j$的概率，这里我们假设$f(i,j)$总是取值$\lbrace 0, 1\rbrace$，是严格的指标函数而不是概率。$n_j=\sum_{i=1}^nf(i,j)$，表示类$j$的个数。$p(j)$表示类$j$的先验概率，即：$p(j)=n_j/n$，给一个分类器，$p(i,j)$表示样本$i$属于类$j$的__预测__概率，取值案范围为$[0,1]$。
+
+根据上面的假设和符号，下面针对上面的几个Calibration measures进行说明：
+
+##### Mean Squared Error
+
+MSE用来度量与真值的偏差率，有时候使用$MSE^p$来区别回归中的MSE，它定义为：
+$$
+MSE=\sum_{j=1}^C\sum_{i=1}^n{(f(i,j) - p(i,j))^2\over n\times C}={1\over n\times C}\sum_{j=1}^C\sum_{i=1}^n(f(i,j) - p(i,j))^2
+$$
+原始的MSE并不是一个校准测量方法，之后在校准损失和精化损失方面被分解。分解的一个重要思想是将数据组织成仓（bin），并且将每个仓中观察到的概率与预测概率或全局概率进行比较。在分解中，数据集$T$被分为$k$个仓（bins）：
+$$
+MSE={1\over n\times C}{\sum_{j=1}^C\sum_{l=1}^k\sum_{i=1,i\in l}^{n_l}n_l\times(p(i,j)-\overline f(i,j))^2 - \sum_{l=1}^kn_l\times(\overline f_l(i,j) -\overline f(j)) + \overline f(j) \times(1-\overline f(j))}
+$$
+其中：$\overline f_l(i,j)=\sum_{i=1, i=l}^{n_l}{f(i,j)\over{n_l}}，\overline f(j)=\sum_{i=1}^n{f(i,j)\over n}$。
+
+##### LogLoss
+
+$$
+Logloss = \sum_{j=1}^C\sum_{i=1}^n{f(i,j) - \log p(i,j)\over n}
+$$
+
+##### CalBin
+
+Calibration by Overlapping Bins：
+
+> One typical way of measuring classifier calibration is that the test set must be split into several segments or bins, as the MSE decomposition shows (although MSE does not need to use bins to be computed). The problem of using bins is that if too few bins are defined, the real probabilities are not properly detailed to give an accurate evaluation. If too many bins are defined, the real probabilities are not properly estimated. A partial solution to this problem is to make the bins overlap.
+
+A calibration measure based on overlapping binning is CalBin.
+
+关于Calibration的详细说明见：[Calibration of Machine Learning Models](http://users.dsic.upv.es/~flip/papers/BFHRHandbook2010.pdf)。
+
+#### Type CD的校准方法
+
+在离散分类中，一个模型是否非校准的可以通过每一个类的数量来分析——具体通过混淆矩阵（confusion matrix）。混淆矩阵的列示real值，行时预测值，例如：有a,b,c三类
+
+| predicted\real | a    | b    | c    |
+| -------------- | ---- | ---- | ---- |
+| a              | 20   | 2    | 3    |
+| b              | 0    | 30   | 3    |
+| c              | 0    | 2    | 40   |
+
+实际值的比例a,b,c各位20,34,46，而预测的为25,33,42，比较一致，所以这个分类器是校准过的。（这个判断太ridiculous）
+例如a,b比例为100,20,预测为62,58，则明显没有被校验。对于这种情况，可以考虑修改分割各个类的阈值来实现：
+
+例如在朴素贝叶斯分类方法中，f(a|x)=0.3，f(b|x)=0.06，朴素贝叶斯的判断是如果f(a|x)>=f(b|x)则为a类否则为b类。这种分类可能会导致a类多分，所以可以考虑__估计__(注意这里的用词)一个阈值来调整分类结果。比如设$r=p(a|x)/p(b|x)$，这个比例范围为0到$$\infty$$，然后__估计__$r$值，设最优值为$u$，则$r>u$时取a类，否则为b类。
+
+#### Type CP的校准方法
+
+另一种情况是概率分类模型（CP类型）的校准，它需要更复杂的技术。 在这种情况下，目标是当模型预测类a的概率是0.99时，这意味着该模型更有信心该类是预测0.6时的类。确定预测的可靠性在许多应用中是最基本工作（诊断，实例选择和模型组合）。
+
+可以通过reliability diagrams来分析模型是否校准，详见[Calibration of Machine Learning Models](http://users.dsic.upv.es/~flip/papers/BFHRHandbook2010.pdf)
+
+有几种方法可以用来进行校准，下面介绍。
+
+##### Bining Average
+
+将测试样例中各个样例属于正类的概率进行排序，然后进行分段，新的预测变量先通过模型计算属于正类的概率，然后按照这个值找到所属于的bin中，然后修正后的概率为这个bin中所有概率的平均值。
+
+#### Isotonic Regression(PAV)
+
+PAV-pair-adjacent violators algorithm，相邻违反者算法。
+
+这个算法必须满足 校准的概率必须是单调递减的序列，如：$p_1\ge p_2\ge p_3\ge...\ge p_n$,然后计算公式为：
+$$
+p^*(i,j)= {p(i, j) + p(i + 1, j)\over 2}
+$$
+这个过程不断的重复，直到得到一个isotonic set（有序集）
+
+如果不满足单调递减序列，则PAV算法每次对于一对连续的不满足上面的递减的概率，将这一对的概率都替换成其这两个的均值，即：$p^*(i,j)=p^*(i+1, j) = {p(i, j) + p(i + 1, j)\over 2}$。
+
+##### Platt's Method
+
+Platt提出了一种使用Sigmoid的参数方法，将估计概率映射到校准概率。这个方法被开发用于对SVM（支持向量机）的输出做转换，将原始数据$[0-\infty，\infty]$转换为概率。当然也可以扩展到其他类型的模型。具体形式如下：
+$$
+p^*(i,j) = {1\over 1 + e^{A\times p(i,j) + B}}
+$$
+当预测概率的失真是呈现为sigmoid形式（误差分布？），Platt方法就很有效了。Isotonic Regression比较灵活，可以适用于任何单调失真。校准的效果可能依赖数据集大小，上述所有方法都可以使用训练集或附加验证集用于校准模型。
+
+#### Type RD和Type RP的校准方法
+
+Type RD一般在回归算法中就包含了类似校准的方式，如最小二乘中以偏差最小为策略来计算最优值。文档中没有详细的描述，不信就去看。
 
 
 
-
-
+| bin  | instance | score |
+| ---- | -------- | ----- |
+| 1    |          |       |
 
