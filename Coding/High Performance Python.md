@@ -80,3 +80,13 @@ $ python -m cProfile -s cumulative some.py
 
 其中`-s cumulative`表示的是按照累计消耗时间排序。可以列出各个函数所消耗的时间。
 
+### Using line_profiler for line-by-line Measurement
+
+安装：`pip install line_profiler`
+
+使用：在要分析的函数上面使用`@profile`装饰器，用`kernprof.py`（windows里面有`kernprof.exe`）来执行我们的代码。
+
+输出lprof统计文件，可以通过`python -m line_profiler script_to_profile.py.lprof`来读取。
+
+
+
