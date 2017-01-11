@@ -3,6 +3,7 @@ import time
 
 x1, x2, y1, y2 = -1.8, 1.8, -1.8, 1.8
 c_real, c_imag = -0.62772, -.42193
+@profile
 def calc_pure_python(desired_width, max_iterations):
 	x_step = (float(x2 - x1) / float(desired_width))
 	y_step = (float(y1 - y2) / float(desired_width))
