@@ -175,7 +175,7 @@ Windows python3.5 安装失败
 >
 > 代码实例：
 >
-> ```
+> ```python
 > import cherrypy
 >
 > class HelloWorld(object):
@@ -202,7 +202,7 @@ Windows python3.5 安装失败
 
 例如：
 
-```
+```python
 if '__builtin__' not in dir() or not hasattr(__builtin__, 'profile'):
     def profile(func):
         def inner(*args, **kwargs):
@@ -213,4 +213,76 @@ if '__builtin__' not in dir() or not hasattr(__builtin__, 'profile'):
 ### Strategies to Profile Your Code Successfully
 
 由于芯片的加速机制，可能Cool CPU比Hot CPU有更好的性能——对同一段代码来说。操作系统也会有同样的一些机制，例如：例如笔记本使用电池时和使用直接电源时对CPU的控制的差异，为了构建一个稳定的标尺，可以禁用这些软硬件自己的一些优化机制。
+
+## Lists and Tuples
+
+不管`list`还是`tuple`都是一类数据结构——`array`，`list`是动态数组，而`tuple`是静态数组。但是他们的检索特定位置的数据耗费都是`O(1)`。
+
+当创建一个`array`（无论`list`或者`tuple`）时，我们首先分配一个系统内存块（这块内存每一个section用来存储一个整数大小的指针指向实际数值）。Python的`list`存储数组大小，所以长度为5的`list`会分配6个block，第一个是长度。
+
+`array`里面实际存储的是真是值的位置，每个位置存储叫做一个`bucket`，找到第一个`bucket`的位置位`M`，如果想要检索第`i`个元素，则元素所在位置的`bucket`为`M+i`。使用`tracemalloc`查看，`list`大小只是元素个数的大小，上面的`block`和这里的`bucket`的关系需要继续考究。
+
+```python
+>>> import tracemalloc
+    tracemalloc.stop()
+    tracemalloc.start(2)
+    l5=[]
+    snapshot = tracemalloc.take_snapshot()
+    stas=snapshot.statistics('lineno')
+    stas[-1]
+Output: <Statistic traceback=<Traceback (<Frame filename='<ipython-input-37-1e09d79c3ce8>' lineno=5>,)> size=4 count=1>
+```
+
+#### A More Efficient Search
+
+可以自定义对象，使用`__eq__和__lt__`来做用户自定义对象的比对。
+
+可以在创建list的时候就进行排序，这样在通过value来检索数据的时候就可以使用二分法来检索，增进效率。
+
+Python标准库`bisect`可以保证插入数组的时候是有序的，检索也会采用最优化的二分法。例如：
+
+```python
+>>> import bisect
+    import random
+    def f(count=100000, isbisect=False):
+    numbers = []
+    for i in range(count):
+        value = random.randint(count*-1, count)
+        if not isbisect:
+            numbers.append(value)
+        else:
+            bisect.insort(numbers, value)
+    return numbers
+    n1 = f()
+    n2 = f()
+>>> %timeit n1=f()
+1 loops, best of 3: 534 ms per loop
+>>> %timeit n2=f(isbisect=True)
+1 loops, best of 3: 2.23 s per loop
+>>> %timeit n1.index(99999)
+1000 loops, best of 3: 1.65 ms per loop
+>>> %timeit bisect.bisect(n2, 99999)
+The slowest run took 7.88 times longer than the fastest. This could mean that an intermediate result is being cached 
+1000000 loops, best of 3: 1.3 µs per loop
+```
+
+可以看到`bisect`在插入数据时的低效和在检索上的高效，所以需要根据自己的所处的场景来进行具体应用的考量。
+
+### Lists Versus Tuples
+
+`list`和`tuple`使用相同的底层数据结构，但有下面几点差异：
+
+* `List`是动态的，一旦创建成功，可以改变元素的个数，mutable
+* `tuple`是静态的，一旦创建成功，则不可以改变元素的个数，immutable（元素值也不能修改）
+* `tuple`在python运行期间，是被缓存起来，意味着不需要在使用时再要求内核保留内存
+
+最后一点，Python运行时缓存，具体是缓存在哪里？python虚拟机的机制需要了解。
+
+这两个类型都可以存不同的类型（mix types），但是保持类型的一致可以减少一些存储和计算的开销。一些其他库：`blist`和`array`也可以缩减这种开销。`blist`不是标准库，需要[安装](https://pypi.python.org/pypi/blist/1.3.6)。
+
+`blist`通过使用array/tree的数据结构来优化remove的效率，所以`list`太大而且经常删数据，则比较有优势。而且它也维持了一个`bisect`，所以查找效率也可以保障。
+
+
+
+
 
