@@ -18,6 +18,16 @@
 
 GPU的缺点都来自于其一般作为外围设备，所以连接GPU和Memory Units的bus是PCI bus，效率比较低，不想fronted bus——连接CPU L1/L2、memory Units的bus。
 
+<<<<<<< HEAD
+### Putting the Fundamental Elements Together
+
+考虑找到一个将计算组件组合在一起最好的解决方法，明白python底层到底如何处理，可以逐步的使我们的python代码优化。所以需要考虑面对问题的解决方案（拆分成运算组件）以及python运行机制，结合这两者来不对进行代码优化。
+
+和分布式类似，减少数据的传输（不同的是，这里不是网络传输，而是存储器之间的传输），尽量使一个指令执行多个数据。__传输运算而不是数据__。
+
+
+numpy：执行运算更快；pandas：处理数据更加方便，所以这可能就是numpy和pandas的差异。
+=======
 ## Performing to Find Bottlenecks
 
 优化之前先要进行perform的检测，知道程序的瓶颈在哪里，这样才能有的放矢的进行优化工作。
