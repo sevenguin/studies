@@ -292,7 +292,70 @@ The slowest run took 7.88 times longer than the fastest. This could mean that an
 
 `blist`通过使用array/tree的数据结构来优化remove的效率，所以`list`太大而且经常删数据，则比较有优势。而且它也维持了一个`bisect`，所以查找效率也可以保障。
 
+`List`的mutable是以memory和computation作为代价的
 
+### Lists as Dynamic Arrays
 
+`List`是会分配M（M>N）个存储空间给它，然后当元素数N==M的时候，创建一个新的`List`，然后分配M个空间，然后将原来的`List`复制过去，新的M大于当时的长度N。在2.7时，M的计算方式是：
 
+```python
+M = (N >> 3) + (N < 9 ? 3 : 6)
+```
+
+### Tuples As Static Arrays
+
+`Tuple`是静态的，但是可以相加来扩充：`t1+t2`，具体底层操作和`List`resize一致，就是没有额外的内存分配。
+
+还有一点需要注意，Python是提供垃圾回收机制的，当你不使用一个对象时进行垃圾回收释放内存。但是对于大小为1~20的`tuple`（不同版本可能会做大小调整），如果不使用时不会立刻进行回收，而这部分内存是保留起来供以后可能使用。这就是说如果以后有新的`tuple`要创建，则可以直接使用这个内存，而不需要跟OS交流，申请内存。所以之前说的reserve memory就是这个了。所以相对于`List`每次都需要和OS先做一下申请，`Tuple`就会快那么一丢丢。
+
+```python
+>>> %timeit l = [0,1,2,3,4,5,6,7,8,9] 
+   1000000 loops, best of 3: 697 ns per loop
+>>> %timeit t = (0,1,2,3,4,5,6,7,8,9)
+   10000000 loops, best of 3: 23.1 ns per loop
+```
+
+对比上面，差别还是比较大的。
+
+## Dictionaries and Sets
+
+`set`和`dictionary`不像`tuple`和`list`，有固定的顺序（可以使用元素位置来索引），但是他们有固定的值来索引——`key`。其中`set`没有`value`，只有`key`。
+
+> 一个`hashable`类型，是实现了`__hash__`这个_magic function_，也实现了`__eq__`或`__cmp__`
+
+`Dictionary`和`Set`都有一个花销，由于要保存`key`，所以会有多余的内存开销，而且虽然检索是`O(1)`，但是具体的索引时间还是要看`hashable`函数。
+
+对比下面两个做法，就能体会到选择不同数据结构存储对性能的影响了：
+
+```python
+# phonebook中first name重，phonename的形式：[(name, phoneno)]
+>>> def f_list(phonebook):
+        unique_names = []
+        for name, phone in phonebook:
+            f_name = name.split(' ', 1)[0]
+            if f_name not in unique_names:    # 这个应该也是一个O(n)的算法，遍历列表
+                unique_names.append(f_name)
+        return len(unique_names)
+>>> def f_set(phonebook):
+        unique_names = set()
+        for name, phone in phonebook:
+            f_name = name.split(' ', 1)[0]
+            unique_names.add(f_name)
+        return len(unique_names)
+>>> phonebook = [
+    ("John Doe", "555-555-5555"),
+    ("Albert Einstein", "212-555-5555"),
+    ("John Murphey", "202-555-5555"),
+    ...
+    ("Albert Rutherford", "647-555-5555"),
+    ("Elaine Bodian", "301-555-5555")]   # 29071个元素
+>>> %timeit f_list(phonebook)
+   1 loops, best of 3: 1.39 s per loop
+>>> %timeit f_set(phonebook)
+   10 loops, best of 3: 22.2 ms per loop
+>>> len(phonebook)
+   29071
+```
+
+对比两个方法，数据量如果很大的话，效率还是相差一个数量级的。
 
