@@ -359,3 +359,26 @@ M = (N >> 3) + (N < 9 ? 3 : 6)
 
 对比两个方法，数据量如果很大的话，效率还是相差一个数量级的。
 
+### How Do Dictionaries and Sets work?
+
+`Dictionaries and Sets`都是通过`hash tables`来做到在查找和插入上的时间复杂度为`O(1)`。`hash function`将例如字符串、对象的key转换为对一个list的索引，从而有效的做到了这一点。
+
+#### Inserting and Retrieving
+
+key值先经过hash处理，在经过masked，mask保证最后结果在分配的buckets个数中。如果这个mask会根据内存分配大小变化，其实就是将key值映射成一个integer数字，这个数字可以索引buckets——如list般。这还么完，如果最后处理结果找到的bucket已经被用了(_hash collision_)，则对当前bucket中索引的value值（key/value的value）和目前我们要插入的value是否相等，如果相等则不更新（这个value对象使用`cmp`方法）直接返回。如果不等则使用一个线性函数继续找一个合适的值作为索引。如果最后处理结果找到的bucket没有使用，则直接插入值返回。
+
+```python
+# key处理过程的伪码
+def index_sequence(key, mask=0b111, PERTURB_SHIFT=5): 
+    perturb = hash(key) #
+	i = perturb & mask
+	yield i
+	while True: 
+        i=((i<<2)+i+perturb+1) 
+        perturb >>= PERTURB_SHIFT
+		yield i & mask
+```
+
+#### Deletion _(?)_
+
+由于`NULL`值在探测hash collision时使用`NULL`作为标志值（不理解，前面也没看到记录，姑且记下来），所以deletion的使用一个特殊值来标识这个bucket为空，但是在解决hash collision时可能仍然被认作是有值（出现hash冲突时，还是不能使用？为什么要这样，既然已经空了？）。这里的空槽（empty slots）可以在将来使用（将来是什么时候），也可以在resize的时候被删除。
