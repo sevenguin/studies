@@ -382,3 +382,68 @@ def index_sequence(key, mask=0b111, PERTURB_SHIFT=5):
 #### Deletion _(?)_
 
 由于`NULL`值在探测hash collision时使用`NULL`作为标志值（不理解，前面也没看到记录，姑且记下来），所以deletion的使用一个特殊值来标识这个bucket为空，但是在解决hash collision时可能仍然被认作是有值（出现hash冲突时，还是不能使用？为什么要这样，既然已经空了？）。这里的空槽（empty slots）可以在将来使用（将来是什么时候），也可以在resize的时候被删除。
+
+#### Resize
+
+类似`list`这种方式，分配内存也是因为元素数增长存储整体数量也增长（只不过增长方式不同），而且一个关键点是，如果resize的时候，会重新将老的元素插入到新分配的空间中，所以index也是重新计算（因为mask的值因为分配bucket的数量变化而变化了），所以数据量大的时候效率会很低。resize不仅仅是insert，delete也会。
+
+#### Hash Functions and Entroy
+
+Python中的对象一般都是hashable，因为他们都有内建的`__hash__`和`__cmp__`函数关联。对于数值类型（`int or float`），hash值是简单的bit值；`Tuple`和`String`hash值基于他们的content。而`List`由于值会发生变化，所以不可以被hash（因为值变化，真求hash值则位置就会发生变化）。用户自定义的类有默认的`__hash__`和`__cmp__`，`__hash__`默认返回对象的内存位置（`id`得到的值），`__cmp__`默认比对的也是内存位置。（py2.6中并没有`__hash__`和`__cmp__`默认，py3.5中有，但是hash值并不是id还是有差别）。
+
+### Dictionaries and Namespaces
+
+在python的命名空间中也使用了Dictionary的O(1)检索的优点。
+
+在使用一个变量、函数或模块（var，function，module）时，首先，会在`locals()`的字典中查找(python对这个做了足够多的优化），如果没找到去`globals()`中查找，如果还没找到，则在`__builtin__`模块的`locals()`中查找。看下面的代码类说明这个层次感：
+
+```python
+>>> import math
+    from math import sin
+    import dis
+>>> def test1(x):
+    	return math.sin(x)
+>>> def test2(x):
+    	return sin(x)
+>>> def test3(x, sin=math.sin):
+    	return sin(x)
+>>> dis.dis(test1)
+  6           0 LOAD_GLOBAL              0 (math)    # global lookup module math
+              3 LOAD_ATTR                1 (sin)     # lookup the attribute
+              6 LOAD_FAST                0 (x)       # local lookup(fast)
+              9 CALL_FUNCTION            1 (1 positional, 0 keyword pair)
+              12 RETURN_VALUE
+>>>  dis.dis(test2)
+  2           0 LOAD_GLOBAL              0 (sin)     # explicit import the sin，then directly lookup sin
+              3 LOAD_FAST                0 (x)       # local lookup(fast)
+              6 CALL_FUNCTION            1 (1 positional, 0 keyword pair)
+              9 RETURN_VALUE
+>>> dis.dis(test3)
+  2           0 LOAD_FAST                1 (sin)     # local lookup(fast)
+              3 LOAD_FAST                0 (x)       # local lookup(fast)
+              6 CALL_FUNCTION            1 (1 positional, 0 keyword pair)
+              9 RETURN_VALUE
+```
+
+虽然`locals`返回一个`dictionary`，但是局部变量不需要在字典中查找，他们存储在一个非常小的数组中，查找速度会非常快。
+
+当然，`test3`代码不那么`Pythonic`，如果函数内部迭代调用很多globa变量、函数，可以在函数内使用本地变量替换这些全局的变量：`local_var = global_var`，这样可以增加效率。（但是测试了一下，效率提升不是很显著，100W次的调用也就是`ms`级的改进）。
+
+## Iterators and Generators
+
+迭代器和生成器
+
+创建迭代器之前需要先创建一个`list`，而generator是逐个创建并返回，所以在内存使用上generator更胜一筹，使用内部`__iter__`来使用iterator来进行`for ..in ..`循环。
+
+> __两个比较__
+>
+> ```python
+> >>> l = [1,2,3,4,5]
+> >>> [i for i in l if i > 2]   # 注意，这里可以使用if呦
+>     [3,4,5]   # 输出是一个list
+> >> (i for i in l if i > 2)   # 注意这里的括号
+>     <generator object <genexpr> at 0x03B370F0>    # 输出的是一个生成器
+> ```
+
+### Iterators for Infinite Series
+
