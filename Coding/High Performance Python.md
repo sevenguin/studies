@@ -96,7 +96,7 @@ $ python -m cProfile -s cumulative some.py
 
 使用：在要分析的函数上面使用`@profile`装饰器，用`kernprof.py`（windows里面有`kernprof.exe`）来执行我们的代码。
 
-加上`@profile`装饰器之后，才能产生统计信息。
+加上`@profile`装饰器之后，才能产生统计信息。`kernprof -l -v profile.py`直接看
 
 `-o`参数会输出lprof统计文件，可以通过`python -m line_profiler script_to_profile.py.lprof`来读取。
 
@@ -447,3 +447,22 @@ Python中的对象一般都是hashable，因为他们都有内建的`__hash__`�
 
 ### Iterators for Infinite Series
 
+`Generator`可以将数据产生和转换分成两个阶段，这样就可以选择将一个转换函数作用到一个新的数据集还是一个已经存在的数据集。
+
+```python
+def gen():
+    for i in range(10):
+        yield i
+def trans():
+    for d in gen():
+        #do som trans
+        pass
+```
+
+### Lazy Generator Evaluation
+
+由于generator只是计算当前值，所以在某些情况可能比较难搞。但是`itertools`提供了很多办法。`built-in`也停工了一些内建的方法，如：`map,reduce,filter,zip`
+
+## Matrix and Vector Computation
+
+将复杂问题拆解成简单基本的事件来分析处理。
