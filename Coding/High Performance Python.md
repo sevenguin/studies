@@ -16,10 +16,7 @@
 
 所有的连接都叫做bus，只是根据不同的层级叫不同名字而已。
 
-GPU的缺点都来自于其一般作为外围设备，所以连接GPU和Memory Units的bus是PCI bus，效率比较低，不想fronted bus——连接CPU L1/L2、memory Units的bus。
-
-<<<<<<< HEAD
-### Putting the Fundamental Elements Together
+GPU的缺点都来自于其一般作为外围设备，所以连接GPU和Memory Units的bus是PCI bus，效率比较低，不想fronted bus——连接CPU L1/L2、memory Units的bus。Putting the Fundamental Elements Together
 
 考虑找到一个将计算组件组合在一起最好的解决方法，明白python底层到底如何处理，可以逐步的使我们的python代码优化。所以需要考虑面对问题的解决方案（拆分成运算组件）以及python运行机制，结合这两者来不对进行代码优化。
 
@@ -466,3 +463,51 @@ def trans():
 ## Matrix and Vector Computation
 
 将复杂问题拆解成简单基本的事件来分析处理。
+
+### Memory Fragmentation
+
+由于Python中没有专门对vector的数据结构，在使用List时，其本身的特点限制了整体的效率。我们都知道，List中元素存储的不是实际的值，而是一个指针，指向实际值的位置，这会导致两个问题：增加检索次数；内存碎片。例如：在检索`data[2][4]`时，首先我们找到到`data`的第3个row，然后再通过这里存储的指针找到这个row的真正的值，然后在这个列表（值是列表）中找到第5个元素的位置，然后通过这个位置找时机值，所以总共多了两次检索。而且由于存储的是地址，实际值很可能存在内存的各个片段，所以在OS进行加载时并不能有效的预加载，这就造成了内存碎片的问题。
+
+Linux中的`perf`命令可以有效的展示程序占用的资源，例如：
+
+```shell
+$perf stat -e cycles,stalled-cycles-frontend,stalled-cycles-backend,instructions,cache-references,cache-misses,branches,branch-misses,task-clock,faults,minor-faults,cs,migrations -r 3 python script.py
+```
+
+计算的向量化只能发生在相关数据都缓存在CPU cache中，而bus只能从连续的内存读取数据存储到CPU cache中，所以不连续的数据就没有办法缓存，也就没有办法向量化计算。
+
+`array`可以解决内存碎片的问题，这个数据结构中存储的是数据值本身。但是Python并没有完全解决计算向量化，因为即使数据缓存了，Python仍然不知道如何向量化我们的循环。
+
+由于`array`底层实现的原因，每次存取的时候会产生额外的消耗，所以`array`也不利于math方面的工作，更适合于`fixed-type`的数据——有效的内存处理（整体缓存）。
+
+#### Enter numpy
+
+`numpy`很好的解决了上述问题，存储数据在连续的内存块中，而且支持向量化操作。而且`numpy`拥有较好的操作性，不仅仅性能有保障，而且使用起来也更简单。
+
+在使用list、array、numpy比对上，numpy最优，而且是成百倍的提升，array最差。
+
+由于申请内存会需要经过和其他进程、kernel等来完成，所以相比预先分配好直接replace-in（改其中元素），效率会差很多.
+
+#### numexpr: Making In-Place Operations Faster and Easier
+
+numpy向量操作一次只能做一个计算，如果A\*B-C，则先进行A\*B然后存在临时vector中，然后再做后面的计算。
+
+`numpyexpr`可以有效的进行整个向量运算，将其编译成有效的代码，更合适的内存、CPU处理。其中一个关键点就是`numpexpr`考虑了CPU cache，保证各个level的CPU cache存储适当的数据。
+
+```python
+from numexpr import evaluate
+def evolve(grid, dt, next_grid, D=1):
+    laplacian(grid, next_grid)
+    evaluate("next_grid*D*dt+grid", out=next_grid)
+```
+
+当要处理的`grid`变大时，`numpexpr`就会显出其充分利用CPU cache的优势，体现出由于`pure numpy`的性能。
+
+**结语**
+
+综上，我们可以看到优化主要是两方面的工作：减少CPU获得数据的时间和次数；减少CPU必须做的工作。要注意在程序中分配内存、读取配置文件、预计算一些数据等，如何将这些的使用次数降到最低。
+
+不断分析程序中的性能瓶颈，找到问题所在，然后优化。
+
+## Compiling to C
+
