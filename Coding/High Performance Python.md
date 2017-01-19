@@ -511,3 +511,108 @@ def evolve(grid, dt, next_grid, D=1):
 
 ## Compiling to C
 
+Python的几种编译器以及适用范围：
+
+* `Cython` 将Python代码编译成C代码，适用于包含numpy和一般的Python代码
+* `Shed Skin` 非numpy代码编译成C
+* `Numba` 对numpy专门的编译器
+* `Pythran` 对于numpy和非numpy代码的一个新的编译器
+* `PyPy` 一个稳定的JIT（just in time）编译器，也是只对非numpy代码
+
+如果你的代码不包括numpy，则可以使用`Cython, Shed Skin, PyPy`，但是如果使用了`numpy`，则可选择`Cython, Numba, Pythran`。
+
+当然得注意各种编译器的新版本是否有支持对象的调整。
+
+### JIT Versus AOT Compilers
+
+AOT:Ahead of time，包括的编译器`Cython, Shed Skin, Pythan`
+
+JIT:Just in time，包括编译器`Numba, PyPy`
+
+AOT编译器一般针对自己的机器特别编译一个版本，也可以像Anaconda那样直接使用通用版，但是下载源码自己编译是否会优于通用版？
+
+JIT的一个问题时，如果你经常运行的小的脚本，使用JIT效率会影响较大，因为编译需要耗费时间。
+
+所以具体使用哪种，也需要根据情况考虑。
+
+### Why Does Type Information Help the Code Run Faster?
+
+由于Python变量类型是动态的，在一个片段中变量类型可以变换，而有些函数由于类型不同会产生不同的操作，例如：
+
+```python
+a = 1.0
+abs(a)
+a = 1.0 + 1.0j
+abs(a)
+```
+
+`abs`会根据具体类型是`float`还是`complex`，来决定具体的运算，所以在开始的时候确定类型很重要。
+
+而且Python会对一些基本类型（int等）进行封装成更高级的对象——包含`__hash__`等内建方法，如果我们需要的是数学运算，那最好的方式就是使用基本类型而不是封装成的类。
+
+### Using a C Compiler
+
+Cython使用gcc，Shed Skin使用g++，Microsoft的编译器是cl，Intel's的是icc。
+
+gcc适用于更多的平台，但是统一性就会部分损害优化的程度，例如针对Intel的芯片，icc的优会优于gcc。
+
+### Cython
+
+注意是Cython不是CPython，Cython是另一个编译器，支持编译pure python和扩展的Cython代码（基于Pyrex）。更有利于编写Python的C扩展。
+
+使用Cython的库有：scipy、scikit-learn，lxml和zmq。
+
+#### Compiling a Pure-Python Version Using Cython
+
+下面说明个例子，直接使用Cython编译成pyd，可以直接通过`import`导入。
+
+```python
+# filename: cythonfn.pyx
+def calculate_z(maxiter, zs, cs):
+	"""Calculate output list using Julia update rule"""
+	output = [0] * len(zs)
+	for i in range(len(zs)):
+		n = 0
+		z = zs[i]
+		c = cs[i]
+		while n < maxiter and abs(z) < 2:
+			z = z * z + c
+			n += 1
+		output[i] = n
+	return output
+
+# filename setup.py
+from distutils.core import setup
+from distutils.extension import Extension
+from Cython.Distutils import build_ext
+setup(
+	cmdclass = {'build_ext': build_ext},
+	ext_modules = [Extension("calculate", ["cythonfn.pyx"])]
+	)
+
+# execute cmd
+>>> python setup.py build_ext --inplace
+# 得到calculate.cp35-win32.pyd文件，在windows下是pyd，linux下应该是pyc文件，pyd可以通过dll工具反编译
+```
+
+#### Cython Annotations to Analyze a Block of Code
+
+虽然Cython这样简单的方式speedup 我们的代码，但是要知其所以然，我们才能有的放矢的进行优化工作。
+
+`cython -a code.pyx`可以生成一个`code.html`，产生了一个注解的`code.pyx`的代码页面。黄色越深说明PVM调用越多（生成了更多的C代码），颜色月浅说明越少生成C代码（越少的PVM调用）。目标就是消灭那些深黄色的代码，最好一片白。
+
+循环语句中控制循环的一般执行比较多，但是可优化余地有限，可以关注循环语句中的内部语句，注意调整其代码，增加性能。
+
+#### Adding Some Type Annotations
+
+即便是在python中使用基本类型，如：`int`等，在使用的时候也会和PVM交互（进行Python更高level对象的转换）。而可以使用Cython的方法来减少这方面的消耗，使用：`cdef type var`，例如上面`cythonfn.pyx`代码类型提前在函数最开始声明：
+
+```python
+def calculate_z(maxiter, zs, cs):
+    cdef unsinged int i,n
+    cdef double complex z,c
+    ...
+```
+
+再使用Cython产生一个`html`，可以看到只涉及到`z,c,i,n`的运算操作都是白的——即和PVM没有交互。
+
