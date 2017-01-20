@@ -616,3 +616,37 @@ def calculate_z(maxiter, zs, cs):
 
 再使用Cython产生一个`html`，可以看到只涉及到`z,c,i,n`的运算操作都是白的——即和PVM没有交互。
 
+Cython和Numpy的使用需要配置setup.py和一些schedule的设置（static, dynamic等）
+
+Cython会做边界检查，会消耗一点CPU时间，可以通过增加flag来去掉边界检查：
+
+```python
+#cython: boundcheck=False
+def func():
+    pass
+```
+
+### PyPy
+
+PyPy是CPython的替代，提供了所有的内置模块。PyPy的JIT编译器非常有效，只需做很少甚至不做任何工作就可以取得不错的速度提升。
+
+PyPy在性能表现方面要强于CPython。
+
+#### Garbage Collection Differences
+
+PyPy相比CPython使用不同类型的垃圾回收器，CPython使用引用计数，而PyPy使用修改标记和清除方法，PyPy可能会更晚的清除不用的对象。
+
+所以在写代码的时候还是要有这方面的考虑，虽然代码上的差异不是很大，但是还是有一些细微的差别。[PyPy和CPython不同](http://doc.pypy.org/en/latest/cpython_differences.html)
+
+由于两者之间还是有一些差别，所以PyPy尚且不能支持所有的模块，不支持并不是不能用，而是这部分包和模块还是使用CPython，PyPy尽可能的移除模块对C extension libraries的依赖。[PyPy兼容的模块](https://bitbucket.org/pypy/compatibility/wiki/Home)
+
+在PyPy中，使用numpy需要一个中间层（会导致速度变慢）——`cpyext`，但是对于numpy，PyPy有一个实验项目：[numpypy](http://buildbot.pypy.org/numpy-status/latest.html)
+
+### Foreign Function Interfaces
+
+可以使用C来开发，然后编译成so(linux)，放在系统中可以检索到的lib目录，然后使用标准库`ctypes`来加载so，并做一些两者之间的交互（类型转换和函数提取等）
+
+`ctypes`处理起来有点麻烦，就像还没有进化好的工具，`cffi`看了一眼，觉得没有更优秀，处理方式和`ctypes`不同。
+
+#### CPython Module
+
