@@ -648,5 +648,64 @@ PyPy相比CPython使用不同类型的垃圾回收器，CPython使用引用计�
 
 `ctypes`处理起来有点麻烦，就像还没有进化好的工具，`cffi`看了一眼，觉得没有更优秀，处理方式和`ctypes`不同。
 
-#### CPython Module
+## Concurrency
+
+并行程序并不受制于I/O，这是最大的收获。在一个并行程序中，区别于顺序执行——one line to next——并行的代码处理`events`，不同部分的代码处理不同的`events`。
+
+### Introduction to Asynchronous Programming
+
+当程序进入I/O等待，执行的程序将暂停，这样内核可以进行低级的操作处理I/O请求（叫做上下文切换context switch）。这样就需要将CPU缓存中的数据取出（切出时）和重新装载（切入时）。
+
+在并发程序中，我们一般会有一个`event loop`，管理什么时候要执行什么程序。其实这个`event loop`只是一个简单的函数列表。在列表顶端的函数执行，然后下一个。例如：
+
+```python
+from queue import Queue
+from functools import partial
+eventloop = None
+class EventLoop(Queue):
+    def start(self):
+        while True:
+            function = self.get()
+            function()
+def do_hello():
+    global eventloop
+    print("Hello")
+    eventloop.put(do_world)
+def do_world():
+    global eventloop
+    print("world")
+    eventloop.put(do_hello)
+if __name__ == '__main__':
+    eventloop = EventLoop()
+    eventloop.put(do_hello)
+    eventloop.start()
+        
+```
+
+采用`event loop`一般使用两种模式：`callback`或`futures`。
+
+* __callback__： 众所周知，在`callback`模式中参数是一个函数——叫做callback function。例如：
+
+```python
+def save_data_to_db(callback):
+    pass
+def print_response(value):
+    pass
+save_data_to_db(print_response)
+```
+
+​	`save_data_to_db`异步执行，存储数据库立即返回，等到真的执行完再执行`print_response`回调，继续执行下面的逻辑。
+
+* __futures__：在futures中，异步程序先返回一个future result的promise，等到异步程序执行完之后（可以使用`yeild`，我们期望的实际值返回之后再进行其他运算。下面例子就是使用`yield`实现，类似串行执行的程序：
+
+```python
+@coroutine
+def save_value(value, callback):
+    print("Saveing...")
+    db_response = yield save_to_db(result, callbacl)
+    print("Saved")
+eventloop.put(partial(save_value, "hello world"))
+```
+
+Python2.7（future-based concurrency）和Python3.3+（`asyncio`留意）的处理还是有些不同，下面会对两个版本进行介绍。
 
