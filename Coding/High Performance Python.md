@@ -16,15 +16,14 @@
 
 所有的连接都叫做bus，只是根据不同的层级叫不同名字而已。
 
-GPU的缺点都来自于其一般作为外围设备，所以连接GPU和Memory Units的bus是PCI bus，效率比较低，不想fronted bus——连接CPU L1/L2、memory Units的bus。Putting the Fundamental Elements Together
+GPU的缺点都来自于其一般作为外围设备，所以连接GPU和Memory Units的bus是PCI bus，效率比较低，不像fronted bus——连接CPU L1/L2、memory Units的bus。Putting the Fundamental Elements Together
 
 考虑找到一个将计算组件组合在一起最好的解决方法，明白python底层到底如何处理，可以逐步的使我们的python代码优化。所以需要考虑面对问题的解决方案（拆分成运算组件）以及python运行机制，结合这两者来不对进行代码优化。
 
 和分布式类似，减少数据的传输（不同的是，这里不是网络传输，而是存储器之间的传输），尽量使一个指令执行多个数据。__传输运算而不是数据__。
 
-
 numpy：执行运算更快；pandas：处理数据更加方便，所以这可能就是numpy和pandas的差异。
-=======
+
 ## Performing to Find Bottlenecks
 
 优化之前先要进行perform的检测，知道程序的瓶颈在哪里，这样才能有的放矢的进行优化工作。
@@ -51,7 +50,7 @@ def some_func(*args, **kwargs):
 
 也可以使用`timeit`模块来粗粒度的测量CPU-bound方法的执行速度。
 
-IPython和Anaconda中的qt-console中都可以使用`%timeit`直接通过交互式的方式来测量某个语句的执行速度。`%%timeit`可以测量语句块。
+IPython和Anaconda中的qt-console中都可以使用`%timeit`直接通过交互式的方式来测量某个语句的执行速度。
 
 也可以使用Linux下的`/usr/bin/time`(注意要带上路径`time`直接使用无法度量，但是`which time`显示的就是`/usr/bin/time`，这点很奇怪)，例如：
 
@@ -71,7 +70,7 @@ sys 0.04
 * user记录的是非核函数消耗时间
 * sys记录的是核函数消耗时间
 
-user+sys和real的查可能是I/O消耗的时间，也可能是告诉你当前系统正在忙着处理其他的程序。`time --verbose`可以获得更多的信息（time也包含了python的启动时间）。
+user+sys和real的差可能是I/O消耗的时间，也可能是告诉你当前系统正在忙着处理其他的程序。`time --verbose`可以获得更多的信息（time也包含了python的启动时间）。
 
 ### Using the cProfile Module
 
@@ -708,4 +707,45 @@ eventloop.put(partial(save_value, "hello world"))
 ```
 
 Python2.7（future-based concurrency）和Python3.3+（`asyncio`留意）的处理还是有些不同，下面会对两个版本进行介绍。
+
+### Serial Crawler
+
+#### [gevent](http://www.gevent.org/intro.html)
+
+一个最简单的异步处理库是`gevent`，它使用的是返回`futures`的编程模式。`gevent`在运行时对I/O标准库函数进行修改达到异步的目的（monkey-patches：运行时对程序进行修改），所以大部分时候就是使用标准的IO库函数。
+
+_`gevent` is a coroutine-based Python networking library._
+
+`gevent`提供两种机制来实现异步编程——正如我们刚刚提到的，对标准库IO进行修正达到异步IO，它也提供一个`Greenlet`对象，其可以用于并行执行。`greenlet`是一个`coroutine`类型，可以考虑成一个线程，其实，所有的`greentlets`使用一个物理线程。相比于使用多个CPU来运行所有的`greentlet`，`gevent`的调度是使用一个`event loop`在I/O等待期间切换它们进行运行。`gevent`使用`wait`使处理`event loop`更透明，一个`wait`函数将启动一个`eventloop`，而且尽可能久的运行，直到所有的`greenlet`都执行完。一般`gevent`代码都是顺序执行，在某一点设置很多`greenlets`做一些并行的任务，然后使用`wait`函数启动一个`event loop`来执行所有并行任务，当`wait`函数正在执行，所有在queue中的并行任务开始执行直到所有都完成，然后又回到之前的顺序执行中（serial）。
+
+`gevent.iwait`是只要有返回，即处理，而`gevent.wait`是等到所有都处理完才返回。
+
+> __monkey patch__
+>
+> A **monkey patch** is a way for a program to extend or modify supporting system software locally (affecting only the running instance of the program).
+>
+> 在不同语言中其意义可能各有不同，在Python等动态语言中，monkey patch仅仅指在运行时动态修改一个类或模型，用来弥补目前第三方代码的问题（可能是bug，也可能是一些不能满足现在需求的功能）。
+>
+> 作用：
+>
+> 1. 在运行时替换`methods/attributes/functions`
+> 2. 在不维护一套私有的源码情况下，修改或扩展第三方产品的行为
+> 3. 在运行时，对内存中的对象使用一个patch来替换在磁盘上的源码
+> 4. 发布与源码一起存在的安全或功能修复（像一个插件一样，保存原来功能的前提下，修复原有的问题）
+>
+> 使用monkey patch时也要考虑其和可能引来的问题。具体详见Wikipedia.
+
+`grequests`将`request`和`gevent`融合，这样使用起来就会相对简单一些。
+
+### tornado
+
+不同于`gevent`，`tornado`是使用回调函数来实现异步操作。
+
+### AsyncIO
+
+Python3.4+从新构造了原有标准库的`asyncio`，实现异步功能来处理IO消耗多的的系统。
+
+使用`async def`或`@asyncio.coroutine`来定义函数或方法。
+
+注意`yield from`.
 
