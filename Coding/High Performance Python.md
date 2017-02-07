@@ -753,3 +753,7 @@ Python3.4+从新构造了原有标准库的`asyncio`，实现异步功能来处�
 
 CPython默认不使用多个CPU，部分原因是因为Python在设计时就是单核的，另一部分原因是并行处理实际上很难做到有效。Python给我们了工具可以自己选择实现使用多个CPU。
 
+### An Overview of the Multiprocessing Module
+
+`multiprocessing`可以有效利用CPU多核，使用多进程处理任务。在Linux和Windows上都可以运行。
+
