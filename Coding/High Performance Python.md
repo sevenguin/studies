@@ -757,3 +757,6 @@ CPython默认不使用多个CPU，部分原因是因为Python在设计时就是�
 
 `multiprocessing`可以有效利用CPU多核，使用多进程处理任务。在Linux和Windows上都可以运行。
 
+直接在一个函数中使用`Pool`，然后直接调用这个`Pool`的话，就会出现问题，应该是进程处理逻辑上的问题，陷入死循环。（交互窗口就卡住了，只能在shell窗口中执行脚本时看到）
+
+明天研究下GIL和multi threading，多线程为何会效率更低（这个大致也可以理解），GIL battle为何只会在多核CPU中出现？
