@@ -22,6 +22,24 @@
 
 最小二乘法两种解决方法，一种是向量正交，一种是根据迹的运算公式来证明。
 
+梯度下降法更新每个参数时需要：Simultaneous update：
+
+__correct__：
+
+temp0 = $\theta_0$ - $\alpha{\delta\over\delta\theta_0}J(\theta_0, \theta_1)$;temp1 = $\theta_1$ - $\alpha{\delta\over\delta\theta_1}J(\theta_0, \theta_1)$
+
+$\theta_0 = temp0$;$\theta_1=temp_1$
+
+__incorrect__：
+
+temp0 = $\theta_0$  - $\alpha{\delta\over\delta\theta_0}J(\theta_0, \theta_1)$;$\theta_0 = temp0$
+
+$temp1 = \theta_1 - \alpha{\delta\over\delta\theta_1}J(\theta_0, \theta_1)$;$\theta_1=temp_1$
+
+先同一计算然后赋值，否则第二种在计算$\theta_1$的值时，$\theta_0$的值已经是下个迭代中的值了。
+
+梯度下降算法，在靠近最小值时，偏导数会越来越小，所以在距离局部最小值附近时，更新的幅度也会越来越小。
+
 ### 欠拟合与过拟合
 
 将某个特征做一些函数变化（例如取平方），也是一种特征选择手段。某个特征取平方也可以将线性转换成n次模型——$\theta_0 + \theta_1x_1 + \theta_2x_1^2 +… + \theta_nx_1^n$当n太大是就会造成过拟合。
@@ -88,9 +106,9 @@ sofmax regression，logistics regression的扩展，由k=2，推广到k>2。
 
 高斯判别分析（Gaussian Discriminant Analysis）
 
-判别学习算法或直接学习算法p(y|x)，学习的到一个假设直接输出0或1，例如logistics。
+__判别学习算法：__判别学习算法或直接学习算法p(y|x)，学习的到一个假设直接输出0或1，例如logistics。
 
-__生成学习算法:__用来对p(x|y)（一个生成模型对样本特征建立概率模型，在给定样本类别的条件下）、p(y)进行建模，给定所属类的情况，显示某种特定特征的概率，然后通过贝叶斯公式计算p(y|x)。有了这两个之后，就可以很容易计算$p(y=1|x)=p(x|y=1)*p(y=1)/p(x)，p(x)=p(x|y=1)*p(y=1) + p(x|y=0)*p(y=0)$。
+__生成学习算法：__用来对p(x|y)（一个生成模型对样本特征建立概率模型，在给定样本类别的条件下）、p(y)进行建模，给定所属类的情况，显示某种特定特征的概率，然后通过贝叶斯公式计算p(y|x)。有了这两个之后，就可以很容易计算$p(y=1|x)=p(x|y=1)*p(y=1)/p(x)，p(x)=p(x|y=1)*p(y=1) + p(x|y=0)*p(y=0)$。
 
 #### 高斯判别分析算法
 
@@ -148,7 +166,11 @@ __Laplace平滑__:在计算概率时，分子和分布都加上1，这样避免�
 
 有参数$\phi_{k|y=1}=p(x_j=k|y=1)，\phi_{k|y=0}=p(x_j=k|y=0)，\phi_y=p(y=1)$第一个式子表示当发送垃圾邮件时包含词k时的概率，后面依理类推。给定训练参数，则可以求得这些参数的极大似然估计。
 
+Vector:An n*1 matrix, n row, 1 columns.
 
+
+
+3-5
 
 
 
