@@ -2,44 +2,109 @@
 ##Logistic回归模型
 Logistic分布（Logistic distribution）：    
 设X是连续随机变量，X服从Logistic分布是指X具有下列分布函数和密度函数：    
-$
-F(x)=P(X\le x)={1\over{1+e^{-(x-u)/r}}}\\\
+$$
+F(x)=P(X\le x)={1\over{1+e^{-(x-u)/r}}}\\
 f(x)=F^\prime(x)={e^{-(x-u)/r}\over r(1+e{-(x-u)/r})^2},其中，u为位置参数，r>0为形状参数
-$
+$$
+
 ###二项Logistic回归模型
 二项Logistic回归模型是一种分类模型，由条件概率分布P(Y|X)表示，形式为参数化的Logistic分布，这种情况下Y取值为1或0.通过监督学习的方法来估计参数。     
 二项Logistic回归模型概率分布：
-$
-P(Y=1|x) = {exp(w\cdot x+b) \over 1 + exp(w\cdot x+b)}\\\
+$$
+P(Y=1|x) = {exp(w\cdot x+b) \over 1 + exp(w\cdot x+b)}\\
+
 P(Y=0|x) = {1 \over 1 + exp(w \cdot x + b)}, w称为权值向量，b为偏置，w\cdot x 为内积
-$
+$$
 计算两个概率值，然后类别属于概率大的那一类。    
+
 ####回归模型的特点
 几率=p/(1-p), 一个事情的几率是这个事情发生的概率p除以它不发生的概率(1-p)，该事件的对数几率（log odds）或logit函数是：
-$
-logit(p) = log{p \over 1 - p}\\\
-Y=1的对数几率为 log{P(Y=1|x\over 1 - P(Y=1|x)}=w\cdot x\\\
-也就是Y=1的对数几率其实就是参数w和x（这里把b也看做x，b的参数看做1）的线性函数，\\\
+$$
+logit(p) = log{p \over 1 - p}\\
+
+Y=1的对数几率为 log{P(Y=1|x\over 1 - P(Y=1|x)}=w\cdot x\\
+
+也就是Y=1的对数几率其实就是参数w和x（这里把b也看做x，b的参数看做1）的线性函数，\\
+
 也就是可以将w \cdot x转换为概率
-$
+$$
 当上面的线性函数值趋于正无穷大时，概率值就越接近1；反之，线性函数值趋于负无穷时，概率趋于0。    
+
 ####模型参数估计
 设：$P(Y=1|x)=f(x), P(Y=0|x)=1-f(x)，f(x)={e^{w\cdot x}\over 1 + e^{w\cdot x}}$
 则，似然函数为：$\prod_{i=1}^Nf^y_i(x_i)\cdot (1-f(x_i)^{1-y_i})$
 求此值最大，即求对数似然函数最大：
-$L(w) = ln(\prod_{i=1}^Nf^{y_i}(x_i)\cdot (1-f(x_i)^{1-y_i}))\\\
-\qquad=\sum_{i=1}^N[y_ilnf(x_i) + (1-y_i)ln(1-f(x_i))]\\\
-\qquad=\sum_{i=1}^N[y_iln{f(x_i)\over 1-f(x_i)} + ln(1-f(x_i))]\\\
+$$
+L(w) = ln(\prod_{i=1}^Nf^{y_i}(x_i)\cdot (1-f(x_i)^{1-y_i}))\\
+
+\qquad=\sum_{i=1}^N[y_ilnf(x_i) + (1-y_i)ln(1-f(x_i))]\\
+
+\qquad=\sum_{i=1}^N[y_iln{f(x_i)\over 1-f(x_i)} + ln(1-f(x_i))]\\
+
 \qquad=\sum_{i=1}^N[y_i(w\cdot x_i) - ln(1 + e^{w\cdot x_i}]
-$
+$$
 对上面式子使用梯度下降方法或者拟牛顿方法来求得w最好估计$w^\prime$。最后按照计算$P(Y=1|x, w=w^\prime)和P(Y=0|x, w=w^\prime)$
+
+#### 决策边界
+
+模型解释：把模型输出看做是$P(y=1|x,\theta)$，也就是logistics函数值看作是概率
+
+Decision Boundary
+
+决策边境是模型的属性，而不是数据的属性。数据可以拟合出模型的参数，但是决策边境是模型所表现出来的。
+
+由于$h(\theta)$表示的是概率，则：$h(\theta)\ge 0.5$时，y=1，否则y=1。而$h(\theta)=J(z)$，而$J(z)={1\over 1+e^z}$，所以要y=1,即需要：$J(z)\ge 0.5，即z\ge 0$，而$z=\mathbf X^T \cdot \mathbf w$，而z=0，即$0=\mathbf X^T \cdot \mathbf w$就是决策边界了，就是要用数据拟合出这个决策边界的参数。
+
+Logistics的好坏可以从其开始的假设知道，其将模型输出看做是概率，如果数据分布很好的拟合了logistics的分布函数，则算法效果会很好，否则可能也就尔尔。所以事先对数据进行验证、可视化很重要。是否可以去验证数据是否属于某种概率分布，从而更好的选择算法呢？
+
+#### cost function
+
+或者说loss function（代价函数也可以理解为处理错误时需要付出的代价，目标就是最小化代价），线性回归的损失函数是：$Cost=1/m\sum_i^m1/2(h_\theta(x^{(i)})-y)$，在logistics回归中，由于$h_\theta(x)$是非凸函数，所以几遍使用梯度下降求得结果很可能是局部最优解。所以重新找一个凸性的损失函数，有益于求出最优解。则损失函数如下：
+$$
+Cost(h_\theta(x), y)=\begin{aligned}-log(h_\theta(x))\ if\ y=1\\-log(1-h_\theta(x)\ if\ y = 0\end{aligned}
+$$
+为了使得上面的cost function容易计算，可以转换成等价的式子：
+$$
+J(\theta) = -{1\over m}\sum_i^m[y^{(i)}log(h_\theta(x)) + (1 - y)log(1-h_\theta(x))]
+$$
+所以对上式进行拟合求出参数$\theta$.
+
+> 很多数学方法都是目前问题的一个最优解决方案，但不是唯一，也可能发现更好的，例如上面的Cost Func，前任发现了这个Cost Func可以有效的符合解决Logistics回归问题，所以使用这个方法，但不一定他就是那个最好的（可能以后会有更好的）。对于这类问题，理解这个东西为什么能解决这个问题，或者说解决这个问题需要满足哪些条件，然后记住这些解决办法。尽量去理解逻辑，如果尚且理解不了，就先记住，知识在不断扩充中，可能就会开悟。
+
+#### 更高级的优化方法
+
+相比梯度，有一些更加好的，但更复杂的算法：
+
+* Conjugate gradient
+* BFGS：共轭梯度法
+* L-BFGS：限制尺度共轭梯度法
+
+这三个学习算法的优缺点：
+
+* __优点__：不需要选择学习率$\alpha$；比梯度下降速度更快
+* __缺点__：更复杂
+
+> 这些算法比较复杂，需要提升数值计算的能力，在学习ML过程中，需要原型扩散，如果猛的扎进去，很多东西自己一时间没法串联起来，很快也就忘了。例如这块，这三个算法知道如何用就可以了，以目前自己的数学水平要去搞懂他们，花费的时间太长，会耽搁学习进度，而且学习的内容很容易碎片化。所以得先理清浅层次的内容，等到熟通这部分，不断向外围扩展，同时不断提升数学知识。
+
+在`Octave`中，使用这三个方法时，只需要写个函数提供Cost Function和其对应每个参数的梯度即可，例如：
+
+```octave
+function [jVal1, gradient] = costFunction(theta);
+    jVal1 = (theta(1) - 5)^2 + (theta(2) - 5)^2
+    gradient = ones(2, 1);
+    gradient(1) = 2*(theta(1) - 5);
+    gradient(2) = 2*(theta(2) - 5);
+```
+
 ###多项Logistic回归模型
 可以将二项回归模型推广到多项Y={1,2,3...K}，则：
-$
-P(Y=k|x) = {e^{w_k \cdot x}\over 1 + \sum_{k=1}^{K-1}e^{w_k \cdot x}}，k=1,2,3...K-1\\\
+$$
+P(Y=k|x) = {e^{w_k \cdot x}\over 1 + \sum_{k=1}^{K-1}e^{w_k \cdot x}}，k=1,2,3...K-1\\
+
 P(Y=K|x) = {1 \over 1 + \sum_{k=1}^{K-1}e^{w_k \cdot x}}
-$
+$$
 模型参数估计参考二项，还是使用似然函数估计，只不过在推导的时候替换掉多项的概率的公式。
+
 ##最大熵估计
 ###最大熵原理
 最大熵原理认为，学习概率模型时，在所有可能的概率模型中，熵最大的模型是最好的模型。通常用约束条件来确定概率模型集合，所以最大熵原理也可以表述为在满足约束条件的模型集合中选取熵最大的模型。
