@@ -46,3 +46,16 @@ $$
 \theta = (X^TX + \lambda M)^{-1}X^Ty
 $$
 M是一个除了第一个元素为0外，对角线上所有元素为1的，其他元素都为0的(n+1)*(n+1)的矩阵。如果使用带有正则项的Cost Function仍然可以达到全局最优。
+
+### Logistics回归正则化
+
+对于Cost Function：
+$$
+repeat\{\\
+    \theta_0 = \theta_0 - \alpha{1\over m}\sum_{i=1}^m(h_\theta(x^i) - y^i)x_0^i\\
+    \theta_j = \theta_0 - \alpha[{1\over m}\sum_{i=1}^m(h_\theta(x^i) - y^i)x_j^i + {\lambda\over m}\theta_j],(j=1,2,3...,n)
+  \\
+\}
+$$
+虽然式子和上面的线性回归很相似，但是这里的$h_\theta$是不同的，这里的$h_\theta={1\over 1+e^{-\theta^Tx}}$
+
