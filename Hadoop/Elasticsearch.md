@@ -68,4 +68,21 @@ username什么的现在没用，也没配置。
    1. 在ElasticSearch中运行：`bin/plugin install file:///path/to/file/license-2.4.4.zip;bin/plugin install file:///path/to/file/marvel-agent-2.4.4.zip`
    2. 在Kibana中运行：`bin/kibana plugin --install marvel --url file:///path/to/file/marvel-2.4.4.tar.gz`
 
-### 
+### 和Hive结合使用
+
+需要下载elasticsearch-hadoop的包，这个程序向下兼容，所以5.x的包可以兼容ElasticSearch的2.x版本，详细见git地址：
+
+https://github.com/elastic/elasticsearch-hadoop
+
+下载完之后，里面是针对hadoop生态里面各个系统的jar包，可以使用这些jar包来和hadoop生态里面这些产品进行数据互通，例如：hive中写入数据，ElasticSearch中可以看到，反之亦然。
+
+和hive结合使用过程如下：
+
+```shell
+sh$ hive
+hive> add jar /path/to/elasticsearch-hadoop-dir/elasticsearch-hadoop-hive-5.3.0.jar
+hive> create external table user(id int, name string) stored by 'org.elasticsearch.hadoop.hive.EsStorageHandler' tblproperties('es.resource'='index/document', 'es.nodes'='cdh-worknode2', 'es.port'='9200', 'es.nodes.wan.only'='true', 'es.index.auto.create'='true');  
+hive> select * from user;   # 可以查询ElasticSearch中的数据了
+hive> insert overwrite table user select s.id, s.name from user_source;  # 从user_source中数据插入user中
+```
+
