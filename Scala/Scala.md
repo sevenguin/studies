@@ -1,6 +1,21 @@
 #Scala
 
+一些好玩的东西
+
+1. `s"abc${variable}prefix"`，有个变量`val variable = 2`，就可以直接用来，字符串前面加一个prefix，然后用$，如果前后有字符，则需要用大括号括起来名字（类似shell）
+2. `Any`为Scala的绝对父类型，所有其他类型都继承于其两个子类型`AnyVal`和`AnyRef`，其中`AnyVal`是包含`Char,Boolean,Unit`和所有`Numeric`类型，这个类型的变量可能在运行时分配到堆或者栈上，作为一个JVM的基本类型值；`AnyRef`都是分配到堆上，这里的Ref其实就是表示这个类型是一个引用类型。
+3. `Noting`类型是所有类型的子类型，所以可以作为任何返回值返回，Nothing不能实例化，仅仅作为type使用，抛出异常时，就返回的是Nothing。
+4. `None`类型是所有`AnyRef`类型的子类，其有个关键字是`null`，表示的是不指向任何内存中的实例
+5. 不支持自动将其他类型值作为`Boolean`判断，即便是`null`，也不会判断为`false`
+6. `Unit`类型被用作函数或者表达式的返回类型，表示没有返回任何东西，`Unit`表示出来的值就是`()`，你可以定义变量是`Unit`类型：`val a:Unit = ()`，但是一半是作为函数或表达式中使用。
+7. `Tuple`，可以包含不同类型，`_1,_2`来对第一第二个元素索引，起始位置不是`0`。构造两个元素的tuple:`val t='a'->97`
+8. `match`不像C中，没有`break`会顺序执行，这个不会，且没有break；多个pattern：`case pattern1|pattern2 => expression`，可以有`case other`作为通配，这里也可以写为`case _ => expression`还可以：`case <pattern> if <boolean expression> => expression`和判断类型`case x:Boolean => println("it's boolean")`
+9. ​
+
+
+
 ##Basic OOP in Scala
+
 ###Class and Object Basic
 由于Scala中也允许声明object，所以为了区别scala中从class new出来的对象和object声明的对象，class new出来的叫做instance of some class
 > final class A，A不能被继承
@@ -11,7 +26,7 @@
 scala中，在函数中直接使用匿名函数时需要注意：
 * `list.map((line:String)=>do something)` map里面的line指定String的时候需要用括号括起来
 * `list.map(lien=>do something)` 这个时候可以不指定String，默认就是类型一定的，这个时候是不用括起来的
-其实指定类型是比较冗余的，而且想想，如果加上括号其实是生成了一种tuple，这个tuple第一个元素是line。如果是传入多个字段的话，map其实就是把这个变量当做一个tuple，这时候也不用指定，直接用line._1/_2来指定tuple里面的元素了。这个后面研究下Function再说
+  其实指定类型是比较冗余的，而且想想，如果加上括号其实是生成了一种tuple，这个tuple第一个元素是line。如果是传入多个字段的话，map其实就是把这个变量当做一个tuple，这时候也不用指定，直接用line._1/_2来指定tuple里面的元素了。这个后面研究下Function再说
 ####Currying(柯林)
 Hashell Curry
 柯林转换就是将一个多参数函数转换成一个函数链，每一个都有一个单独的参数，例如：
@@ -48,7 +63,7 @@ implicit def any2stringadd
 * 只有当前范围的implicit方法被考虑，目标类型的`companion object`中定义的也可以
 * implicit方法不会串行查找，即仅仅这个方法有一个当前类型的参数，返回值是目标类型（不具备传递性）
 * 如果出现奇异（即有多个implicit方法可以被使用），则不会出现转换，implicit方法要起作用，则必须有且只有一个
-这里的范围应该是显式import的编译器隐式import的所有代码
+  这里的范围应该是显式import的编译器隐式import的所有代码
 #####Implicit Function Parameters 
 2、可能会重复调用一个函数很多次，而且其某些参数在很多情况下是相同的，这种情况下你可能想给其赋默认值，这样就不需要每次都传入了
 `
@@ -72,7 +87,7 @@ test(2)(3)
 
 ###一些特性
 1. `class A(val a:String)` a作为A的一个property；`class A(a: String)` a就不是A的property
-因为类里面参数都声明为`val`，编译器生成一个私有的字段（在内部使用不同的名字），同时生成一个和声明参数相同的reader method.
+   因为类里面参数都声明为`val`，编译器生成一个私有的字段（在内部使用不同的名字），同时生成一个和声明参数相同的reader method.
 
 
 详见：[Scala官方文档](http://www.scala-lang.org/sites/default/files/sids/dragos/Thu,%202010-05-06,%2017:56/sid-spec.pdf)
