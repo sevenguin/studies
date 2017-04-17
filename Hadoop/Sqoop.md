@@ -8,11 +8,12 @@ Sqoop分两个版本，Sqoop1和Sqoop2，Sqoop1的版本对应到1.4.x；Sqoop2�
 下面是安装Sqoop步骤：
 1、下载解压Sqoop1.99.x
 2、配置环境变量.bash_profile,并`source .bash_profile`使其生效，配置如下：
-`export SQOOP_HOME=sqooppath
-export PATH = sqooppath/bin:$PATH
-export CATALINA_BASE=sqooppath/server
-export LOGDIR=$SQOOP_HOME/logs/
-`
+
+> export SQOOP_HOME=sqooppath
+> export PATH = sqooppath/bin:$PATH
+> export CATALINA_BASE=sqooppath/server
+> export LOGDIR=$SQOOP_HOME/logs/
+
 3、修改`server/conf/sqoop.properties`，属性`org.apache.sqoop.submission.engine.mapreduce.configuration.directory`为hadoop配置文件目录
 4、修改`server/conf/catalina.properties `属性`common.loader`为hadoop的所有jar包路径
 `common.loader=HADOOP_HOME/share/hadoop/common/*.jar,HADOOP_HOME/share/hadoop/common/lib/*.jar,HADOOP_HOME/share/hadoop/hdfs/*.jar,HADOOP_HOME/share/hadoop/hdfs/lib/*.jar,HADOOP_HOME/share/hadoop/mapreduce/*.jar,HADOOP_HOME/share/hadoop/mapreduce/lib/*.jar,HADOOP_HOME/share/hadoop/tools/*.jar,HADOOP_HOME/share/hadoop/tools/lib/*.jar,HADOOP_HOME/share/hadoop/yarn/*.jar,HADOOP_HOME/share/hadoop/yarn/lib/*.jar,HADOOP_HOME/share/hadoop/httpfs/tomcat/lib/*.jar`
