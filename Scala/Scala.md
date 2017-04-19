@@ -10,13 +10,158 @@
 6. `Unit`类型被用作函数或者表达式的返回类型，表示没有返回任何东西，`Unit`表示出来的值就是`()`，你可以定义变量是`Unit`类型：`val a:Unit = ()`，但是一半是作为函数或表达式中使用。
 7. `Tuple`，可以包含不同类型，`_1,_2`来对第一第二个元素索引，起始位置不是`0`。构造两个元素的tuple:`val t='a'->97`
 8. `match`不像C中，没有`break`会顺序执行，这个不会，且没有break；多个pattern：`case pattern1|pattern2 => expression`，可以有`case other`作为通配，这里也可以写为`case _ => expression`还可以：`case <pattern> if <boolean expression> => expression`和判断类型`case x:Boolean => println("it's boolean")`
-9. ​
+9. `scala source`，可以直接执行scala文件（例如命令，main文件）；也可以在scala下执行`:load source`加载
 
+
+## 基础知识
+
+纯函数：
+
+* 有一个或多个输入参数
+* 计算只是用输入参数
+* 返回一个值
+* 相同的输入总是对应相同的输出
+* __不要使用（影响）函数外的变量（的值）__
+* 不被这个函数外的任何数据影像
+
+函数定义:
+
+`def <identifier>(arg: argtype):<type> = <expression>`
+
+函数调用，如果没有参数：`identifier`就可以直接调用（不用带括号，当然带上也可以）；如果一个参数可以传统方式调用，也可以`identifer <expression>`，这个表达式只要返回类型和参数一致即可（多个参数用这个方法我还没发现如何弄）。
+
+也可以使用入参的默认值。
+
+__Vararg__：类似Python中的`*arg, **argw`，表示多个入参：
+
+```scala
+def sum(items:Int*): Int = {
+  var total = 0
+  for(i <- items){
+    total += i
+  }
+  total
+}
+sum(10, 10, 20)
+```
+
+__Parameters Groups__：不同于将所有参数放在一个Group中，可以分成多组：
+
+```scala
+def dosome(a:String)(b:String): Unit = {
+  println(s"$a, $b")
+}
+```
+
+__Type Parameters__：
+
+```scala
+# define
+def <function name>[type-name](parameters-name:paramters-type):<type-name> = <expression>
+
+def iden[A](a:A): A = a
+iden[String]("hello")
+```
+
+__Method__：一个method是在类中定义，并且在整个类中任何实例中可用。调用方法处了传统的方法，还有：
+
+`<object> <method> <paramter>`，如：`"abc" compare "c"`
+
+注意：`var d =3; d.+(4)`，则`d`为7，`+`当做一个计算函数（这样上面的调用方法也可以解释的通）
+
+__函数类型（Method Type）__：其实就是函数也可以作为一种类型、一种变量传递。定义方式：
+
+`([<type>,...]) => <type`，如果是一个参数，前面的`()`可以省略。例如：
+
+```scala
+def f(a: Int, d: Double): Double = {
+    a + d
+}
+val df: (Int, Double)=>Double = f(_, _)    # 这点和`learning scala`上有些不同，这里等号右边的表达式必须是函数带上参数占位符‘_’,而且和实际参数数量相同
+```
+
+__Higher-Order Functions（高阶函数）__：高阶函数是一个函数有一个函数类型的参数或返回值
+
+__function literals（匿名函数）__：定义为`(<arg>:<type>,...)=><expression`，例如：`(a:String)=>s"Hello, $a"`，匿名函数作为参数的时候可以简写，如：`df((a,b)=>a+b)`
+
+__占位符__:占位符是function literals的缩写形式，将参数名用`_`来替换，一般需要满足一下两种情况：
+
+* 显式类型（明确指定类型）
+* 这个参数只被使用一次
+
+```scala
+val doubler: Int => Int = _ * 2
+def df(f:(Int, Int)=>Int) = f(2, 3)
+df(_ + _)   # 这个就直接定义成函数了，都省了(...) => <expression>
+```
+
+__Partial Functions（偏函数）__：之前介绍的函数都称作Total Function（全函数），因为他们能够处理所有可能的输入值。有一些函数不能对所有可能的满足输入参数类型输入值进行处理，称作Partial Function（偏函数），例如：函数对入参求开方，传入的值为负数。
+
+在Scala中，偏函数是通过function literals来定义，其是应用一系列`case`到`input`，需要`input`至少`match`到其中一个`pattern`，如果没有一个`match`，则会抛出`Scala error`。
+
+__Partial Applied Function__：在调用函数时，我们都需要传入参数，有时候想重用传递参数如何办？可以使用partial applied function。
+
+如下：
+
+```scala
+def factorOf(x: Int, y: Int) = y % x == 0
+# 想保留函数的所有参数，只是想简写函数
+val f = factorOf _    # f 就是Partial Applied Function
+# 想保留一部分参数，而其他的被指定
+val multipleOf3 = factorOf(3, _: Int)  # 这里第二个参数被保留，这个参数需要被显式指定
+```
+
+__Currying__:在函数类型方面，具有多个参数列表的函数被认为是多个函数的链.
+
+```scala
+# 对比两个函数
+def factorOf(x: Int, y: Int) = y % x == 0
+def factorOf(x: Int)(y: Int) = y % x == 0
+# 对第二个函数
+val isEven = factorOf(2) _
+val z = isEven(32)   # 对比上面多参数（一个列表）的partial applied function, 更好理解了
+```
+
+#### Collections
+
+ `arrays,lists,maps,sets,trees`
+
+所有可迭代的集合（iterable collection）的根类是`Iterable`。
+
+__不可变集合(Lists, Sets, and Maps__)：
+
+| 函数名                | 函数用途/说明                            | 备注   |
+| ------------------ | ---------------------------------- | ---- |
+| size               | Collection大小                       |      |
+| head               | 第一个元素                              |      |
+| tail               | 除第一个之外，余下所有的元素                     |      |
+| map/foreach/reduce | Iterable即其子类拥有                     |      |
+| asJava             | List(12, 29).asJava                |      |
+| asScala            | new java.util.ArrayList(5).asScala |      |
+
+__可变集合__:
+
+| 不可变集合对象                   | 可变集合对象                    |
+| ------------------------- | ------------------------- |
+| collection.immutable.List | collection.mutable.Buffer |
+| collection.immutable.Set  | collection.mutable.Set    |
+| collection.immutable.Map  | collection.mutable.Map    |
+
+Seq是所有sequences的基类
+
+__单体集合__:
+
+* Option：值为Some or None，`Option(null)-->None`，`Option(2)--->Some(2)`
+* Try: `util.try`，值为Success or Failure
+* future：concurrent.Future
 
 
 ##Basic OOP in Scala
 
+`class Lotus(val color: String, reserved: Boolean) extends Car("Lotus", reserved)`
+
 ###Class and Object Basic
+
 由于Scala中也允许声明object，所以为了区别scala中从class new出来的对象和object声明的对象，class new出来的叫做instance of some class
 > final class A，A不能被继承
 > abstract class B，B不能被实例化 
