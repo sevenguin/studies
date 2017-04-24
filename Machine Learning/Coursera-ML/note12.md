@@ -82,3 +82,28 @@ $$
 如果标注方式是按照上面的方式进行，则有m个数量的样本，则标注m个，则获得m个f，则最后模型参数$\theta$也将有m个（不对$\theta_0$做正则化）。因为最终模型为：
 
 $h = \theta_0 + \theta_1\times f_1+\theta_2\times f_2 + … + \theta_m\times f_m$
+
+### SVM的使用
+
+虽然一般使用SVM软件包——例如（liblinear,libsvm)——来求得参数$\theta$，但是还是有些参数需要我们指定：
+
+* 选择参数C
+* 选择核（相似函数）
+  * 例如：No kernel（linear kernel），预测y=1，if $\theta^Tx\ge 0$,在n（number of features）很大，而m（number of samples）较小，则可以使用这种方法。
+  * 高斯核函数：在使用时需要确保各个特征进行适当的归一化（因为不同的feature取值范围可能差异很大），避免结果收到某一个特征强烈的影响而忽视了另一个特征。
+  * 不是所有的相似性度量函数都可以作为核函数，需要满足默赛尔定理（Mercer's Theorem），这个限制的主要原因是在计算SVM算法过程中，会用到很多最优化方法，所以将核函数限定在一个范围内，可以保证新的核函数可以使用很多现有SVM库计算。下面是其他一些核函数:
+    * 多项式核函数：例如：$k(x,l)=(x^Tl+c)^d，d\ge2,c是常量$，一般当x和l都是严格非负数时
+    * 更多复杂的：String kernel（输入时字符串时）、chi-square kernel、histogram intersection（直方相交算法）
+
+#### 多类问题
+
+可以使用kSVM，即每次选择其中一个类和剩下所以类别为一类的方式（两类问题）进行处理，如果有K个类别，则会得到K个参数向量（$\theta^{(1)},\theta^{(2)}...\theta^{(K)}$），然后分类结果就是：选择$(\theta^{(i)})^Tx$最大的i.
+
+#### Logistic regression vs. SVMs
+
+* if n is large(相对于m)，即n远远大于m，则使用LR火SVM without a kernel
+* if n is small，m is intermediate（比n大，但是也不是太大，），则可以使用kernel为高斯的SVM
+* if n is small，m is large，可以使用LR或SVM without a kernel，因为m太大，可能会影响效率 
+
+SVM可能会出现局部最优问题，但是现有的包里面会比较好的解决。 
+
