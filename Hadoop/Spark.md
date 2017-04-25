@@ -31,3 +31,9 @@ DStream-Discretized Stream:离散化的Stream
 ####DataSets
 Spark1.6中新增的一个实验接口，尝试提供结合SparkSQL的优点和RDD优点。一个Dataset可以通过JVM对象创建，然后使用（map、flatmap、filter等）函数进行转换
 DataSets是一个强类型的 、不可变的对象集合，核心是一个新的编码器，该编码器的作用是将JVM的对象与表结构进行转换。使其可以操作序列化的数据及提高内存利用率。
+
+
+
+### Develop
+
+在开发时，如果是使用基于yarn，则可以使用`yarn logs -applicationId <aplication ID>`来查看执行日志。
