@@ -1,7 +1,12 @@
 #Breeze
 > Breeze is a numerical processing library for Scala. [github](https://github.com/scalanlp/breeze)
 
+#### Enabling Native Code
+
+Breeze使用[netlib-java](https://github.com/fommil/netlib-java)来对线性计算运行时优化（可以生成本地代码）
+
 ##Quick Start
+
 所有Vector是Column Vector，Row Vector应该用`Transpose[Vector[T]]`
 $Vector$
 
