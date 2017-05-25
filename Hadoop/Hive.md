@@ -36,40 +36,40 @@ Metastore是一个单独的关系型数据库，用来存储hive的元数据
 ###Programming
 ####Data Type
 #####Bae type
-|Type|Size|Example|
-|:---:|:--|:-----|
-|tinyint|1 byte signed integer|11|
-|smallint|2byte signed integer|20|
-|int|4 byte signed integer|20| 
-|bigint|8 byte signed integer|20|
-|boolean|boolean true or false|true|
-|float|single precision floating point|3.14159|
-|double|double precision ..|3.14159|
-|string|sequence of characters|'this is a man'|
-|timestamp|integer,float,string|1327882394 (Unix epoch seconds),1327882394.123456789 (Unix epochseconds plus nanoseconds), and '2012-02-0312:34:56.123456789' (JDBCcompliantjava.sql.Timestampformat) |
-|binary|array of bytes||
+|   Type    | Size                            | Example                                  |
+| :-------: | :------------------------------ | :--------------------------------------- |
+|  tinyint  | 1 byte signed integer           | 11                                       |
+| smallint  | 2byte signed integer            | 20                                       |
+|    int    | 4 byte signed integer           | 20                                       |
+|  bigint   | 8 byte signed integer           | 20                                       |
+|  boolean  | boolean true or false           | true                                     |
+|   float   | single precision floating point | 3.14159                                  |
+|  double   | double precision ..             | 3.14159                                  |
+|  string   | sequence of characters          | 'this is a man'                          |
+| timestamp | integer,float,string            | 1327882394 (Unix epoch seconds),1327882394.123456789 (Unix epochseconds plus nanoseconds), and '2012-02-0312:34:56.123456789' (JDBCcompliantjava.sql.Timestampformat) |
+|  binary   | array of bytes                  |                                          |
 *这些类型都是会用Java实现的* `cast(s as float)`cast来进行类型转换，从小的类型转到大的类型
 
 #####Collection type
-|Type|Description|Example|
-|:---:|:--|:-----|
-|struct|like C,字段通过`.`来获得|struct('John', 'Doe')|
-|map|使用数据型获得['key'],map是成对出现，第一个作为key，第二个作为value|map('first', 'John', 'last', 'Doe')|
-|array|通过[index]来获得值|array('John','Doe')|
+|  Type  | Description                              | Example                             |
+| :----: | :--------------------------------------- | :---------------------------------- |
+| struct | like C,字段通过`.`来获得                        | struct('John', 'Doe')               |
+|  map   | 使用数据型获得['key'],map是成对出现，第一个作为key，第二个作为value | map('first', 'John', 'last', 'Doe') |
+| array  | 通过[index]来获得值                            | array('John','Doe')                 |
 **将这些collection字段嵌入到表类型中，可以减少磁盘查找（因为减少了外键关联），所以提升了速度**
 >用于创建表结构
-`CREATE TABLE employees (
-name STRING,
-salary FLOAT,
-subordinates ARRAY<STRING>,
-deductions MAP<STRING, FLOAT>,
-address STRUCT<street:STRING, city:STRING, state:STRING, zip:INT>)
-row format delimited
-fields terminatedby '\001'
-collection items terminated by '\002'
-map keys terminated by '\n'
-stored as textfile 
-;`
+>`CREATE TABLE employees (
+>name STRING,
+>salary FLOAT,
+>subordinates ARRAY<STRING>,
+>deductions MAP<STRING, FLOAT>,
+>address STRUCT<street:STRING, city:STRING, state:STRING, zip:INT>)
+>row format delimited
+>fields terminatedby '\001'
+>collection items terminated by '\002'
+>map keys terminated by '\n'
+>stored as textfile 
+>;`
 
 默认的文件分隔符：
 * $\n$ 每一行表示一个record
@@ -78,16 +78,16 @@ stored as textfile
 * $^C$ 分开key和value，在map中，`\003`
 
 >数据示例：
-`John Doe^A100000.0^AMary Smith^BTodd Jones^AFederal Taxes^C.2^BState
-Taxes^C.05^BInsurance^C.1^A1 Michigan Ave.^BChicago^BIL^B60600
-Mary Smith^A80000.0^ABill King^AFederal Taxes^C.2^BState Taxes^C.
-05^BInsurance^C.1^A100 Ontario St.^BChicago^BIL^B60601
-Todd Jones^A70000.0^AFederal Taxes^C.15^BState Taxes^C.03^BInsurance^C.
-1^A200 Chicago Ave.^BOak Park^BIL^B60700
-Bill King^A60000.0^AFederal Taxes^C.15^BState Taxes^C.03^BInsurance^C.
-1^A300 Obscure Dr.^BObscuria^BIL^B60100`
-相对应的Json数据：
-`{
+>`John Doe^A100000.0^AMary Smith^BTodd Jones^AFederal Taxes^C.2^BState
+>Taxes^C.05^BInsurance^C.1^A1 Michigan Ave.^BChicago^BIL^B60600
+>Mary Smith^A80000.0^ABill King^AFederal Taxes^C.2^BState Taxes^C.
+>05^BInsurance^C.1^A100 Ontario St.^BChicago^BIL^B60601
+>Todd Jones^A70000.0^AFederal Taxes^C.15^BState Taxes^C.03^BInsurance^C.
+>1^A200 Chicago Ave.^BOak Park^BIL^B60700
+>Bill King^A60000.0^AFederal Taxes^C.15^BState Taxes^C.03^BInsurance^C.
+>1^A300 Obscure Dr.^BObscuria^BIL^B60100`
+>相对应的Json数据：
+>`{
 	"name": "John Doe",
 	"salary": 100000.0,
 	"subordinates": ["Mary Smith", "Todd Jones"],
@@ -174,12 +174,12 @@ OUTPUTFORMAT 'com.linkedin.haivvreo.AvroContainerOutputFormat';`
 `alter table db_name replace columns(a_column int comment 'dosomting');` 替换所有已存在的列为下面指定的列
 `alter table tb_name partition(...) set fileformat seqencefile;`
 #####DML
-`load data local path 'somepath' [override] into table tb_name [partition(field=value)]` partition这个只对分区表有效（如果local指定，则将数据从local拷贝到DFS上的最终目录--/hive/warehouse/...，否则将DFS上的移动到最终目录）
-`insert (override|into) table tb_name partition(field=value) select * from tb_name where...`如果一个表的数据要插入到多个表则用下面的语句效率更高，因为只对源表做一次扫描：
+`load data local path 'somepath' [overwrite] into table tb_name [partition(field=value)]` partition这个只对分区表有效（如果local指定，则将数据从local拷贝到DFS上的最终目录--/hive/warehouse/...，否则将DFS上的移动到最终目录）
+`insert (overwrite|into) table tb_name partition(field=value) select * from tb_name where...`如果一个表的数据要插入到多个表则用下面的语句效率更高，因为只对源表做一次扫描：
 `from source_tbname st
-insert override table dst_a partition(field=valuea)
+insert overwrite table dst_a partition(field=valuea)
 select * where st.field=somevalue
-insert override table dst_b partition(field=valueb)
+insert overwrite table dst_b partition(field=valueb)
 select * where st.field=somevalue;`
 动态分区插入，一般插入数据像上面的，需要指定partition对应的field和value，Hive可以自动匹配，需要设置参数`hive.exec.dynamic.partition.mode=nonstrict`
 `insert into table tb_name partition(field) select * from old_tb`
@@ -283,7 +283,7 @@ hadoop支持按照none、record和block拆分，record为默认，这个是hadoo
 * $hive.exec.max.dynamic.partitions$ 动态分区允许创建的最大分区数量
 * $hive.exec.max.dynamic.partitions.pernode$ 每个MR节点允许创建的最大动态分区数量（这个理解不了）
 * $mapred.map/reduce.tasks.speculative.execution$ 配置推测执行，true、false
- 
+
 ###其他
 InputFormat、OutputFormat是用来处理record encoding（将输入流拆分成record，或者将record格式化后给输出流）
 SerDes是用来处理record parsing（将record转化成columns）
