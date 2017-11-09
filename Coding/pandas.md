@@ -511,3 +511,76 @@ Numpy的ufuncs（基于元素的数组方法）都可以使用，例如：`np.ab
 ```
 
 这个还是蛮有用，想目录那种分层概括的数据。
+
+### 一些经验
+
+索引的问题
+
+```python
+Note You may be wondering whether we should be concerned about the loc property in the first example. But dfmi.loc is guaranteed to be dfmi itself with modified indexing behavior, so dfmi.loc.__getitem__ / dfmi.loc.__setitem__ operate on dfmi directly. Of course, dfmi.loc.__getitem__(idx) may be a view or a copy of dfmi.
+```
+
+在索引赋值的时候会有这个提醒，因为链式索引赋值导致的，看下面的例子：
+
+```python
+In [339]: dfmi = pd.DataFrame([list('abcd'),
+   .....:                      list('efgh'),
+   .....:                      list('ijkl'),
+   .....:                      list('mnop')],
+   .....:                     columns=pd.MultiIndex.from_product([['one','two'],
+   .....:                                                         ['first','second']]))
+   .....: 
+
+In [340]: dfmi
+Out[340]: 
+    one          two       
+  first second first second
+0     a      b     c      d
+1     e      f     g      h
+2     i      j     k      l
+3     m      n     o      p
+In [341]: dfmi['one']['second']        # exapmle 1
+Out[341]: 
+0    b
+1    f
+2    j
+3    n
+Name: second, dtype: object
+In [342]: dfmi.loc[:,('one','second')]# exapmle 2
+Out[342]: 
+0    b
+1    f
+2    j
+3    n
+Name: (one, second), dtype: object
+```
+
+1和2得到的结果相同，但是如果给这两个分别赋值，则1的会有上面的Warning，这是因为1其实就是链式索引，转化到底层处理，两个索引分别是：
+
+```python
+# example 1
+dfmi.loc[:,('one','second')] = value
+# becomes
+dfmi.loc.__setitem__((slice(None), ('one', 'second')), value)
+# example 2
+dfmi['one']['second'] = value
+# becomes
+dfmi.__getitem__('one').__setitem__('second', value)
+```
+
+但是有时候我们用：
+
+```python
+def do_something(df):
+   foo = df[['bar', 'baz']]  # Is foo a view? A copy? Nobody knows!
+   # ... many lines here ...
+   foo['quux'] = value       # We don't know whether this will modify df or not!
+   return foo
+```
+
+还是会报错（没有显示的链式索引），这是因为SettingWithCopy的设计bug所导致。所以还是使用：
+
+```python
+df.loc(index, (cols))   # index可以是bool数组，这里是 loc 而不是 iloc
+```
+
