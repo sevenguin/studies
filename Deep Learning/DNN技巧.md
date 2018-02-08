@@ -198,3 +198,35 @@ $\beta_1=0.9, \beta_2=0.999, \epsilon=10^{-8}$，3/4两步主要是为了在最�
 
 当然选择具体的Learning Rate调节方法需要结合优化算法，因为部分优化算法入Adam等可以自己调节学习率。
 
+### 正则化
+
+#### 提前停止
+
+简单来说就是验证集上性能下降（需要保存之前的结果）（下降n次或者一个范围内是下降的），则终止训练。
+
+#### L1/L2正则化
+
+同机器学习的范式正则话，TF的示例代码：
+
+```python
+with arg_scope(
+	[fully_connected],
+    weights_regularizer = tf.contrib.layers.l1_regularizer(scale=0.01)
+	);
+	hidden1 = fully_connected(X, n_hidden1, scope='hidden1')
+	hidden2 = fully_connected(hidden1, n_hidden2, scope='hidden2')
+    logits = fully_connected(hidden2, n_outputs, scope='out')
+....
+reg_loesses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+loss = tf.add_n([base_loss] + reg_losses, name="loss")
+# tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)这句代码的缘由是：TF会自动将这些带有正则话的node加入一个特殊的集合（包括所有的正则损失）
+```
+
+#### Dropout
+
+基本想法就是在每次迭代时按照drop rate(设为__$p$__)随机drop一些神经元（即未激活-值设置为0），需要注意的是训练结束后，在测试或者线上使用时，需要在计算激活值后乘以$(1-p)$（这个值可以被看作是保留概率），因为在训练时只有$（1-p）*n$($n$为总神经元数)个神经元是激活的。一个简单的假设，如果激活值都是1，且线性求和，则训练后的值为$(1-p)*n$，在测试时，如果不处理，使用全部的激活值，则结果应该就是$n$。
+
+所以需要注意的点就是，训练之后，神经元激活值都需要乘以keep rate。
+
+
+
