@@ -1,7 +1,7 @@
-#Hive
+# Hive
 [Hive Wiki](https://cwiki.apache.org/confluence/display/Hive/Home)
 
-###Apache Hive
+### Apache Hive
 Apache Hive是数据仓库软件，查询分布式存储系统的大数据集，提供以下工具：
 * 可以进行简单的数据ETL
 * 将各种格式的数据结构化
@@ -9,19 +9,22 @@ Apache Hive是数据仓库软件，查询分布式存储系统的大数据集，
 * 通过MR来查询数据
 
 Hive可以和Hadoop、HBase整合，下面是Hive和HBase整合的使用方法，如果Hbase是单节点，则可以使用Hive Cli命令访问Hbase：
-`$HIVE_SRC/build/dist/bin/hive --auxpath $HIVE_SRC/build/dist/lib/hive-hbase-handler-0.9.0.jar,$HIVE_SRC/build/dist/lib/hbase-0.92.0.jar,$HIVE_SRC/build/dist/lib/zookeeper-3.3.4.jar,$HIVE_SRC/build/dist/lib/guava-r09.jar --hiveconf hbase.master=hbase.yoyodyne.com:60000`
+```$HIVE_SRC/build/dist/bin/hive --auxpath $HIVE_SRC/build/dist/lib/hive-hbase-handler-0.9.0.jar,$HIVE_SRC/build/dist/lib/hbase-0.92.0.jar,$HIVE_SRC/build/dist/lib/zookeeper-3.3.4.jar,$HIVE_SRC/build/dist/lib/guava-r09.jar --hiveconf hbase.master=hbase.yoyodyne.com:60000```
 如果HBase使用分布式集群，三个ZK的quorum 机器，则用下列命令：
-`$HIVE_SRC/build/dist/bin/hive --auxpath \$HIVE_SRC/build/dist/lib/hive-hbase-handler-0.9.0.jar,$HIVE_SRC/build/dist/lib/hbase-0.92.0.jar,$HIVE_SRC/build/dist/lib/zookeeper-3.3.4.jar,$HIVE_SRC/build/dist/lib/guava-r09.jar --hiveconf hbase.zookeeper.quorum=zk1.yoyodyne.com,zk2.yoyodyne.com,zk3.yoyodyne.com
-`
+
+```$HIVE_SRC/build/dist/bin/hive --auxpath \$HIVE_SRC/build/dist/lib/hive-hbase-handler-0.9.0.jar,$HIVE_SRC/build/dist/lib/hbase-0.92.0.jar,$HIVE_SRC/build/dist/lib/zookeeper-3.3.4.jar,$HIVE_SRC/build/dist/lib/guava-r09.jar --hiveconf hbase.zookeeper.quorum=zk1.yoyodyne.com,zk2.yoyodyne.com,zk3.yoyodyne.com
+```
+
 详见[HBase Integration](https://cwiki.apache.org/confluence/display/Hive/HBaseIntegration#HBaseIntegration-Usage)
 
-##Hive Programming总结
-###Introduce
+
+## Hive Programming总结
+### Introduce
 Hive提供了SQL查询来查找存储于hadoop的数据——HiveQL（Hive Query Language）
 Metastore是一个单独的关系型数据库，用来存储hive的元数据
-相比于Hive，HBase提供了行级的更新（row update）
+相比于Hive，HBase提供了行级的更新（row update）  
 `hive.metastore.warehouse.dir` 存储hive数据的目录
-###CLI
+### CLI
 `hive --define name=value`可以用这个给hive的cli里面传参，参数名为`name`，值为`value`
 `--define`等价于`--hivevar`
 `hive --hiveconf name=value`可以用这个来设置hive的配置参数（也可以是其他值，一般是配置）（define、hivevar、hiveconf都是变量的不同命名空间，而不同命名空间起到的作用不同，例如hiveconf对应的就是hive的配置参数）
@@ -33,9 +36,9 @@ Metastore是一个单独的关系型数据库，用来存储hive的元数据
 >hive 提供直接执行shell命令，例如：`!pwd;`
 >hive 直接执行hadoop命令，例如：`dfs -ls /;`
 >hive 注释，类似oracle ——`--`
-###Programming
-####Data Type
-#####Bae type
+### Programming
+#### Data Type
+##### Bae type
 |   Type    | Size                            | Example                                  |
 | :-------: | :------------------------------ | :--------------------------------------- |
 |  tinyint  | 1 byte signed integer           | 11                                       |
@@ -50,7 +53,7 @@ Metastore是一个单独的关系型数据库，用来存储hive的元数据
 |  binary   | array of bytes                  |                                          |
 *这些类型都是会用Java实现的* `cast(s as float)`cast来进行类型转换，从小的类型转到大的类型
 
-#####Collection type
+##### Collection type
 |  Type  | Description                              | Example                             |
 | :----: | :--------------------------------------- | :---------------------------------- |
 | struct | like C,字段通过`.`来获得                        | struct('John', 'Doe')               |
@@ -173,7 +176,7 @@ OUTPUTFORMAT 'com.linkedin.haivvreo.AvroContainerOutputFormat';`
 `alter table db_name change column old_column_name new_column_name column_type comment 'something about the column' after some_column` after语句可以调整column的位置（如果想放在第一个，则用first替换after some_column即可）
 `alter table db_name replace columns(a_column int comment 'dosomting');` 替换所有已存在的列为下面指定的列
 `alter table tb_name partition(...) set fileformat seqencefile;`
-#####DML
+##### DML
 `load data local path 'somepath' [overwrite] into table tb_name [partition(field=value)]` partition这个只对分区表有效（如果local指定，则将数据从local拷贝到DFS上的最终目录--/hive/warehouse/...，否则将DFS上的移动到最终目录）
 `insert (overwrite|into) table tb_name partition(field=value) select * from tb_name where...`如果一个表的数据要插入到多个表则用下面的语句效率更高，因为只对源表做一次扫描：
 `from source_tbname st
@@ -185,7 +188,7 @@ select * where st.field=somevalue;`
 `insert into table tb_name partition(field) select * from old_tb`
 `create table new_tb as select somefields from old_tb` 将查询子集作为一个表创建
 `insert overwrite local directory '/tmp/some' select * from tb_name` 将数据导出，这个也支持`from tb_name t insert overwrite directory '/ddd' select * where`
-####SQL Query
+#### SQL Query
 对于列示array或map类型的，select的时候可以直接用索引
 `select arr[0], mp['index'] from tb_name`
 `select 'price.*' from tb_name`可以用正则表达式指定列（最新版本貌似没这个功能了）
@@ -240,7 +243,7 @@ as 'org.apache.hadoop.hive.ql.index.compat.CompatIndexHandler';`
 `show formated (index|indexes) on tb_name` 列出索引
 `drop index if exists index_name on table tb_name`
 
-###Hive Schema
+### Hive Schema
 由于MR是将一个job转化成多个task，每个task 对应到一个JVM，而多个小文件每个小文件对应一个Task，这样JVM的启动和关闭会耗费很多资源，降低效率。所以不仅仅小文件对NameNode造成较大压力，而且在MR上也是不利的。（而分区其实就是生成多个小文件，所以分区的字段如果会造成多个小文件的话，会浪费很多资源）
 $Bucket$
 `create table weblog(logid int) partitioned by (dt string) clustered by (logid) 20 bukets;` 在logid上创建20个buckets，使用Hash处理，相同logid的都会分配到相同的bucket上
@@ -253,7 +256,7 @@ hive一般是行存储，但是也有列存储的SerDer，来使用行列混合�
 
 可以参考RCFile来作为存储文件格式
 $Always Use Compression!!$
-#####Tuning-调优
+##### Tuning-调优
 HiveQL作为一种说明性语言，将SQL语句转化成MR的job，所以摸准这点，就是尽量的减少或者调优产生的MR
 一个Hive job组成一个或多个Stage，Hive默认是一次执行一个Stage（也可以进行并行处理）。一个stage可能是MRjob、抽样stage、merge stage等。
 Explain用来查看前面执行的语句的执行计划，产生一个抽象语法树，explain extended可以产生更多的输出
@@ -274,7 +277,7 @@ Hive提供两个虚拟列：一个是拆分的文件名（INPUT_FILE_NAME)，一
 hadoop支持按照none、record和block拆分，record为默认，这个是hadoop的配置，在mapred-site.xml中：
 `mapred.output.compression.type，值为Block、record等` ——这个只对按照sequencefile压缩的文件起作用 
 
-###一些配置
+### 一些配置
 * $hive.cli.print.header$ 表示打印查询结果是否打印列头信息
 * $hive.mapred.mode=strict$ 表示如果是分区表，则必须有partition filter——在partition上的where语句，否则报错，也可以指定为$nonstrict$，这样就不用了
 * $hive.exec.mode.local.auto$ 让Hive决定是否自动使用local mode运行
@@ -284,7 +287,7 @@ hadoop支持按照none、record和block拆分，record为默认，这个是hadoo
 * $hive.exec.max.dynamic.partitions.pernode$ 每个MR节点允许创建的最大动态分区数量（这个理解不了）
 * $mapred.map/reduce.tasks.speculative.execution$ 配置推测执行，true、false
 
-###其他
+### 其他
 InputFormat、OutputFormat是用来处理record encoding（将输入流拆分成record，或者将record格式化后给输出流）
 SerDes是用来处理record parsing（将record转化成columns）
 现在理解是Input是输入数据类型，输出是写入数据库的文件类型，否则还有什么东西要Output呢？
